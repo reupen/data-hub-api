@@ -14,6 +14,8 @@ django-model-utils==3.0.0
 django-mptt==0.8.7  # Remove after squashing migrations
 
 django-oauth-toolkit==1.0.0
+django-allauth==0.32.0
+-e git://github.com/uktrade/django-dit-sso-client.git#egg=dit-sso-client
 whitenoise==3.3.0
 pyyaml==3.12
 colander==1.4

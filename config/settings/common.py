@@ -27,6 +27,8 @@ ALLOWED_HOSTS = ['*']
 
 TIME_ZONE = 'Etc/UTC'
 
+SITE_ID = 1
+
 # Application definition
 
 DJANGO_APPS = [
@@ -37,6 +39,7 @@ DJANGO_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
+    'django.contrib.sites'
 ]
 
 THIRD_PARTY_APPS = [
@@ -46,6 +49,10 @@ THIRD_PARTY_APPS = [
     'oauth2_provider',
     'django_filters',
     'mptt',
+    'allauth',
+    'allauth.account',              # TODO: query - is this needed?
+    'allauth.socialaccount',        # TODO: query - is this needed?
+    'ditsso_internal'
 ]
 
 LOCAL_APPS = [
@@ -132,6 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'company.Advisor'
 AUTHENTICATION_BACKENDS = [
     'datahub.core.auth.CDMSUserBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
 
@@ -190,3 +198,12 @@ OMIS_NOTIFICATION_ADMIN_EMAIL = env('OMIS_NOTIFICATION_ADMIN_EMAIL', default='')
 OMIS_NOTIFICATION_API_KEY = env('OMIS_NOTIFICATION_API_KEY', default='')
 OMIS_NOTIFICATION_TEST_API_KEY = env('OMIS_NOTIFICATION_TEST_API_KEY', default='')
 OMIS_PUBLIC_BASE_URL = env('OMIS_PUBLIC_BASE_URL', default='http://localhost:4000')
+
+# DIT AuthBroker URLs
+DIT_SSO_HOSTNAME = env('DIT_SSO_HOSTNAME', default='')
+DIT_PROFILE_HOSTNAME = env('DIT_PROFILE_HOSTNAME', default='')
+
+# Django-allauth config
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "email"

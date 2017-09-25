@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
+-e git+git://github.com/uktrade/django-dit-sso-client.git#egg=dit-sso-client
+appnope==0.1.0            # via ipython
 boto3==1.4.7
 botocore==1.7.7           # via boto3, s3transfer
 certifi==2017.7.27.1      # via requests
@@ -14,6 +16,8 @@ contextlib2==0.5.5        # via raven
 coverage==4.4.1           # via pytest-cov
 cssselect==1.0.1
 decorator==4.1.2          # via ipython, traitlets
+defusedxml==0.5.0         # via python3-openid
+django-allauth==0.32.0
 django-debug-toolbar==1.8
 django-environ==0.4.4
 django-extensions==1.9.0
@@ -23,7 +27,7 @@ django-mptt==0.8.7
 django-oauth-toolkit==1.0.0
 django-pglocks==1.0.2
 django-reversion==2.0.10
-django==1.11.5            # via django-debug-toolbar, django-environ, django-model-utils, django-oauth-toolkit, django-reversion
+django==1.11.5
 djangorestframework==3.6.4
 dnspython==1.15.0         # via email-validator
 docopt==0.6.2             # via notifications-python-client
@@ -59,7 +63,7 @@ lxml==3.8.0
 mccabe==0.6.1             # via flake8
 monotonic==1.3            # via notifications-python-client
 notifications-python-client==4.3.1
-oauthlib==2.0.3           # via django-oauth-toolkit
+oauthlib==2.0.3           # via django-oauth-toolkit, requests-oauthlib
 pep8-naming==0.4.1
 pep8==1.7.0
 pexpect==4.2.1            # via ipython
@@ -80,10 +84,12 @@ pytest-django==3.1.2
 pytest-sugar==0.8.0
 pytest==3.1.3
 python-dateutil==2.6.1
+python3-openid==3.1.0     # via django-allauth
 pytz==2017.2              # via django
 pyyaml==3.12
 raven==6.1.0
 requests-mock==1.3.0
+requests-oauthlib==0.8.0  # via django-allauth
 requests==2.18.4
 requests_toolbelt==0.8.0
 s3transfer==0.1.11        # via boto3

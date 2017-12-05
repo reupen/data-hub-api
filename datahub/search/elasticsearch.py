@@ -89,10 +89,17 @@ ANALYZERS = (
 )
 
 
+def index_exists(index_name):
+    """
+    :returns: True if `index_name` exists.
+    """
+    client = connections.get_connection()
+    return client.indices.exists(index=index_name)
+
+
 def configure_index(index_name, settings=None):
     """Configures Elasticsearch index."""
-    client = connections.get_connection()
-    if not client.indices.exists(index=index_name):
+    if not index_exists(index_name):
         index = Index(index_name)
         for analyzer in ANALYZERS:
             index.analyzer(analyzer)

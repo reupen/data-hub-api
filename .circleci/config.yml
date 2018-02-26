@@ -1,15 +1,4 @@
-version: 2
-jobs:
-  build:
-    docker:
-      - image: python:3.6
-
-      - image: elasticsearch:5.5
-
-      - image: postgres:9.5
-        environment:
-          POSTGRES_DB=datahub
-
+defaults: &defaults
     environment:
       DATABASE_URL: postgresql://postgres@localhost/datahub
       DATAHUB_SECRET: secret
@@ -25,11 +14,40 @@ jobs:
       SSO_ENABLED: 'True'
       RESOURCE_SERVER_INTROSPECTION_URL: http://sso/o/introspect/
       RESOURCE_SERVER_AUTH_TOKEN: sso-token
-
     working_directory: ~/app
+
+python_image: &python_image
+  image: python:3.6
+
+elasticsearch_image: &elasticsearch_image
+  image: elasticsearch:5.5
+
+postgresql_image: &postgresql_image
+  image: postgres:9.5
+  environment:
+    POSTGRES_DB=datahub
+
+version: 2
+jobs:
+  build:
+    <<: *defaults
+
+    docker:
+      - *python_image
 
     steps:
       - checkout
+
+      - run:
+          name: Install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && mkdir -p ~/dockerize && tar -C ~/dockerize -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.6.0
+
+      - run:
+          name: Create virtual environment
+          command: |
+            python -m venv ~/venv
 
       - restore_cache:
           name: Restore pip cache
@@ -41,26 +59,84 @@ jobs:
 
       - run:
           name: Install dependencies
-          command: pip install --cache-dir ~/cache/pip -r requirements.txt
+          command: |
+            . ~/venv/bin/activate
+            pip install --cache-dir ~/cache/pip -r requirements.txt
 
       - save_cache:
           name: Save pip cache
           key: v1-leeloo-{{ checksum "requirements.txt" }}
           paths:
             - ~/cache/pip
+
+      - persist_to_workspace:
+          root: '~'
+          paths:
+            - app
+            - venv
+            - dockerize
+
+  lint:
+    <<: *defaults
+
+    docker:
+      - *python_image
+
+    steps:
+      - attach_workspace:
+          at: '~'
+
       - run:
           name: Run Flake8
-          command: flake8
+          command: |
+            . ~/venv/bin/activate
+            python -m flake8
+
+  test:
+    <<: *defaults
+
+    parallelism: 6
+
+    docker:
+      - *python_image
+
+      - *elasticsearch_image
+
+      - *postgresql_image
+
+    steps:
+      - attach_workspace:
+          at: '~'
+
+      - run:
+          name: Wait for PostgreSQL and Elasticsearch
+          command: ~/dockerize/dockerize -wait tcp://localhost:5432 -wait tcp://localhost:9200 -timeout 1m
 
       - run:
           name: Run tests
           command: |
-            set -xu
-            ./tests.sh
+            . ~/venv/bin/activate
+            circleci tests glob **/test_*.py | circleci tests split --split-by=timings | xargs python -m pytest --cov -s --junitxml=test-reports/junit.xml
+
+      - store_test_results:
+          path: test-reports
 
       - run:
           name: Publish coverage
           command: |
-            set -xu
             wget -O codecov.sh https://codecov.io/bash
             bash ./codecov.sh -t ${COV_TOKEN}
+
+workflows:
+  version: 2
+  lint_and_test:
+    jobs:
+      - build
+
+      - lint:
+          requires:
+            - build
+
+      - test:
+          requires:
+            - build

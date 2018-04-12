@@ -15,7 +15,6 @@ MODELS_TO_REGISTER_DISABLEABLE = (
     models.ReferralSourceMarketing,
     models.ReferralSourceWebsite,
     models.Role,
-    models.Title,
     models.UKRegion,
 )
 

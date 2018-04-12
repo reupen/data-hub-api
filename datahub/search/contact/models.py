@@ -19,7 +19,6 @@ class Contact(DocType, MapDBModelToDict):
     name_keyword = dsl_utils.SortableCaseInsensitiveKeywordText()
     # field is being aggregated
     name_trigram = dsl_utils.TrigramText()
-    title = dsl_utils.id_name_mapping()
     first_name = dsl_utils.SortableText(
         copy_to=[
             'name',
@@ -63,7 +62,6 @@ class Contact(DocType, MapDBModelToDict):
 
     MAPPINGS = {
         'id': str,
-        'title': dict_utils.id_name_dict,
         'adviser': dict_utils.contact_or_adviser_dict,
         'company': dict_utils.id_name_dict,
         'archived_by': dict_utils.contact_or_adviser_dict,

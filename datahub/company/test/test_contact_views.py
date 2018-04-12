@@ -29,9 +29,6 @@ class TestAddContact(APITestMixin):
 
         url = reverse('api-v3:contact:list')
         response = self.api_client.post(url, {
-            'title': {
-                'id': constants.Title.admiral_of_the_fleet.value.id
-            },
             'first_name': 'Oratio',
             'last_name': 'Nelson',
             'job_title': constants.Role.owner.value.name,
@@ -65,10 +62,6 @@ class TestAddContact(APITestMixin):
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json() == {
             'id': response.json()['id'],
-            'title': {
-                'id': constants.Title.admiral_of_the_fleet.value.id,
-                'name': constants.Title.admiral_of_the_fleet.value.name
-            },
             'first_name': 'Oratio',
             'last_name': 'Nelson',
             'name': 'Oratio Nelson',
@@ -160,7 +153,6 @@ class TestAddContact(APITestMixin):
 
         assert response.status_code == status.HTTP_201_CREATED
         response_data = response.data
-        assert not response_data['title']
         assert not response_data['telephone_alternative']
         assert response_data['address_same_as_company']
         assert not response_data['email_alternative']
@@ -303,7 +295,6 @@ class TestEditContact(APITestMixin):
             company = CompanyFactory()
 
             contact = ContactFactory(
-                title_id=constants.Title.admiral_of_the_fleet.value.id,
                 first_name='Oratio',
                 last_name='Nelson',
                 job_title=constants.Role.owner.value.name,
@@ -340,10 +331,6 @@ class TestEditContact(APITestMixin):
         assert response.status_code == status.HTTP_200_OK, response.data
         assert response.json() == {
             'id': response.json()['id'],
-            'title': {
-                'id': constants.Title.admiral_of_the_fleet.value.id,
-                'name': constants.Title.admiral_of_the_fleet.value.name
-            },
             'first_name': 'New Oratio',
             'last_name': 'Nelson',
             'name': 'New Oratio Nelson',
@@ -478,7 +465,6 @@ class TestViewContact(APITestMixin):
         company = CompanyFactory()
 
         contact = ContactFactory(
-            title_id=constants.Title.admiral_of_the_fleet.value.id,
             first_name='Oratio',
             last_name='Nelson',
             job_title=constants.Role.owner.value.name,
@@ -511,10 +497,6 @@ class TestViewContact(APITestMixin):
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == {
             'id': response.json()['id'],
-            'title': {
-                'id': constants.Title.admiral_of_the_fleet.value.id,
-                'name': constants.Title.admiral_of_the_fleet.value.name
-            },
             'first_name': 'Oratio',
             'last_name': 'Nelson',
             'name': 'Oratio Nelson',

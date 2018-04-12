@@ -122,9 +122,6 @@ class ContactSerializer(PermittedFieldsModelSerializer):
         ),
     }
 
-    title = NestedRelatedField(
-        meta_models.Title, required=False, allow_null=True
-    )
     company = NestedRelatedField(
         Company, required=False, allow_null=True
     )
@@ -142,7 +139,6 @@ class ContactSerializer(PermittedFieldsModelSerializer):
         model = Contact
         fields = (
             'id',
-            'title',
             'first_name',
             'last_name',
             'name',

@@ -82,7 +82,6 @@ class ContactFactory(factory.django.DjangoModelFactory):
     id = factory.LazyFunction(uuid.uuid4)
     created_by = factory.SubFactory(AdviserFactory)
     modified_by = factory.SubFactory(AdviserFactory)
-    title_id = constants.Title.wing_commander.value.id
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
     company = factory.SubFactory(CompanyFactory)

@@ -32,6 +32,7 @@ class Contact(ArchivableModel, BaseModel):
     }
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    # No longer used, but left in place to keep legacy data intact.
     title = models.ForeignKey(
         metadata_models.Title, blank=True, null=True, on_delete=models.SET_NULL
     )

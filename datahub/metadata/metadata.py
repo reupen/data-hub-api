@@ -32,7 +32,6 @@ registry.register(
     queryset=models.Team.objects.select_related('role', 'uk_region', 'country'),
     serializer=TeamSerializer
 ),
-registry.register(metadata_id='title', model=models.Title)
 registry.register(metadata_id='turnover', model=models.TurnoverRange)
 registry.register(metadata_id='uk-region', model=models.UKRegion)
 registry.register(metadata_id='headquarter-type', model=models.HeadquarterType)

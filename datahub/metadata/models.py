@@ -82,7 +82,11 @@ class Country(BaseConstantModel):
 
 
 class Title(BaseConstantModel):
-    """Contact title."""
+    """
+    Contact title.
+
+    No longer used, but left in place to keep legacy data intact.
+    """
 
 
 class Role(BaseConstantModel):

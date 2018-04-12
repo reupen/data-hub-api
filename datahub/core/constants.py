@@ -318,58 +318,6 @@ class Sector(Enum):
     )
 
 
-class Title(Enum):
-    """Titles."""
-
-    admiral = Constant('Admiral', 'c1d9b924-6095-e211-a939-e4115bead28a')
-    admiral_of_the_fleet = Constant('Admiral of the Fleet', 'c2d9b924-6095-e211-a939-e4115bead28a')
-    air_chief_marshal = Constant('Air Chief Marshal', 'c3d9b924-6095-e211-a939-e4115bead28a')
-    air_commodore = Constant('Air Commodore', 'c4d9b924-6095-e211-a939-e4115bead28a')
-    air_marshal = Constant('Air Marshal', 'c5d9b924-6095-e211-a939-e4115bead28a')
-    air_vice_marshal = Constant('Air Vice-Marshal', 'c6d9b924-6095-e211-a939-e4115bead28a')
-    baroness = Constant('Baroness', 'bed9b924-6095-e211-a939-e4115bead28a')
-    brigadier = Constant('Brigadier', 'c7d9b924-6095-e211-a939-e4115bead28a')
-    captain = Constant('Captain', 'c8d9b924-6095-e211-a939-e4115bead28a')
-    colonel = Constant('Colonel', 'c9d9b924-6095-e211-a939-e4115bead28a')
-    commander = Constant('Commander', 'cad9b924-6095-e211-a939-e4115bead28a')
-    commodore = Constant('Commodore', 'cbd9b924-6095-e211-a939-e4115bead28a')
-    corporal = Constant('Corporal', 'f4c5716b-1770-e411-a72b-e4115bead28a')
-    dame = Constant('Dame', 'bad9b924-6095-e211-a939-e4115bead28a')
-    dr = Constant('Dr', 'b5d9b924-6095-e211-a939-e4115bead28a')
-    field_marshal = Constant('Field Marshal', 'ccd9b924-6095-e211-a939-e4115bead28a')
-    flight_lieutenant = Constant('Flight Lieutenant', 'cdd9b924-6095-e211-a939-e4115bead28a')
-    flying_officer = Constant('Flying Officer', 'ced9b924-6095-e211-a939-e4115bead28a')
-    general = Constant('General', 'cfd9b924-6095-e211-a939-e4115bead28a')
-    group_captain = Constant('Group Captain', 'd0d9b924-6095-e211-a939-e4115bead28a')
-    he = Constant('HE', 'bfd9b924-6095-e211-a939-e4115bead28a')
-    hrh = Constant('HRH', 'c0d9b924-6095-e211-a939-e4115bead28a')
-    lady = Constant('Lady', 'b8d9b924-6095-e211-a939-e4115bead28a')
-    lieutenant = Constant('Lieutenant', 'd1d9b924-6095-e211-a939-e4115bead28a')
-    lieutenant_colonel = Constant('Lieutenant Colonel', 'd3d9b924-6095-e211-a939-e4115bead28a')
-    lieutenant_commander = Constant('Lieutenant Commander', 'd2d9b924-6095-e211-a939-e4115bead28a')
-    lieutenant_general = Constant('Lieutenant General', 'd4d9b924-6095-e211-a939-e4115bead28a')
-    lord = Constant('Lord', 'b9d9b924-6095-e211-a939-e4115bead28a')
-    major = Constant('Major', 'd5d9b924-6095-e211-a939-e4115bead28a')
-    major_general = Constant('Major General', 'd6d9b924-6095-e211-a939-e4115bead28a')
-    marshal_of_the_raf = Constant('Marshal of the RAF', 'd7d9b924-6095-e211-a939-e4115bead28a')
-    miss = Constant('Miss', 'a46cb21e-6095-e211-a939-e4115bead28a')
-    mr = Constant('Mr', 'a26cb21e-6095-e211-a939-e4115bead28a')
-    mrs = Constant('Mrs', 'a36cb21e-6095-e211-a939-e4115bead28a')
-    ms = Constant('Ms', 'b4d9b924-6095-e211-a939-e4115bead28a')
-    pilot_officer = Constant('Pilot Officer', 'd8d9b924-6095-e211-a939-e4115bead28a')
-    professor = Constant('Professor', 'bbd9b924-6095-e211-a939-e4115bead28a')
-    rear_admiral = Constant('Rear Admiral', 'd9d9b924-6095-e211-a939-e4115bead28a')
-    reverend = Constant('Reverend', 'b6d9b924-6095-e211-a939-e4115bead28a')
-    second_lieutenant = Constant('Second Lieutenant', 'dad9b924-6095-e211-a939-e4115bead28a')
-    sir = Constant('Sir', 'b7d9b924-6095-e211-a939-e4115bead28a')
-    squadron_leader = Constant('Squadron Leader', 'dbd9b924-6095-e211-a939-e4115bead28a')
-    sub_lieutenant = Constant('Sub-Lieutenant', '744cd12a-6095-e211-a939-e4115bead28a')
-    the_hon = Constant('The Hon', 'bcd9b924-6095-e211-a939-e4115bead28a')
-    the_rt_hon = Constant('The Rt Hon', 'bdd9b924-6095-e211-a939-e4115bead28a')
-    vice_admiral = Constant('Vice Admiral', '754cd12a-6095-e211-a939-e4115bead28a')
-    wing_commander = Constant('Wing Commander', '764cd12a-6095-e211-a939-e4115bead28a')
-
-
 class UKRegion(Enum):
     """UK Regions."""
 

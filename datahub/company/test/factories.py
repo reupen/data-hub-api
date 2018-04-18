@@ -8,6 +8,7 @@ from datahub.company.ch_constants import COMPANY_CATEGORY_TO_BUSINESS_TYPE_MAPPI
 from datahub.company.constants import BusinessTypeConstant
 from datahub.company.models import ExportExperienceCategory
 from datahub.core import constants
+from datahub.core.test_utils import random_country, random_foreign_country
 from datahub.metadata.test.factories import TeamFactory
 
 
@@ -37,10 +38,10 @@ class CompanyFactory(factory.django.DjangoModelFactory):
     name = factory.Faker('company')
     registered_address_1 = factory.Sequence(lambda n: f'{n} Foo st.')
     registered_address_town = 'London'
-    registered_address_country_id = constants.Country.united_kingdom.value.id
+    registered_address_country_id = factory.LazyFunction(random_country)
     trading_address_1 = factory.Sequence(lambda x: f'{x} Fake Lane')
     trading_address_town = 'Woodside'
-    trading_address_country_id = constants.Country.united_kingdom.value.id
+    trading_address_country_id = factory.LazyAttribute(lambda o: o.registered_address_country_id)
     business_type_id = BusinessTypeConstant.private_limited_company.value.id
     sector_id = constants.Sector.aerospace_assembly_aircraft.value.id
     archived = False
@@ -53,6 +54,18 @@ class CompanyFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'company.Company'
+
+
+class UKCompanyFactory(CompanyFactory):
+    """UK company factory."""
+
+    registered_address_country_id = factory.LazyFunction(constants.Country.united_kingdom.value.id)
+
+
+class ForeignCompanyFactory(CompanyFactory):
+    """Foreign company factory."""
+
+    registered_address_country_id = factory.LazyFunction(random_foreign_country)
 
 
 def _get_random_company_category():
@@ -68,7 +81,7 @@ class CompaniesHouseCompanyFactory(factory.django.DjangoModelFactory):
     company_category = factory.LazyFunction(_get_random_company_category)
     registered_address_1 = factory.Sequence(lambda n: f'{n} Bar st.')
     registered_address_town = 'Rome'
-    registered_address_country_id = constants.Country.italy.value.id
+    registered_address_country_id = constants.Country.united_kingdom.value.id
     incorporation_date = factory.Faker('past_date')
 
     class Meta:

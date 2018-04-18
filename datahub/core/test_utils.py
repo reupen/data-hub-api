@@ -11,7 +11,8 @@ from oauth2_provider.models import AccessToken, Application
 from rest_framework.fields import DateField, DateTimeField
 from rest_framework.test import APIClient
 
-from datahub.metadata.models import Team
+from datahub.core.constants import Country as CountryConstants
+from datahub.metadata.models import Country, Team
 from datahub.oauth.scopes import Scope
 
 
@@ -176,3 +177,15 @@ def random_obj_for_model(model):
 def random_obj_for_queryset(queryset):
     """Returns a random object for a queryset."""
     return queryset.order_by('?').first()
+
+
+def random_country():
+    """Returns a random country."""
+    random_obj_for_model(Country)
+
+
+def random_foreign_country():
+    """Returns a random foreign (non-UK) country."""
+    random_obj_for_queryset(
+        Country.objects.exclude(pk=CountryConstants.united_kingdom.value.id)
+    )

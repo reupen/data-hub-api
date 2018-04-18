@@ -9,7 +9,7 @@ from rest_framework.reverse import reverse
 
 from datahub.company.test.factories import CompanyFactory, ContactFactory
 from datahub.core.constants import Country, Sector, UKRegion
-from datahub.core.test_utils import APITestMixin, format_date_or_datetime
+from datahub.core.test_utils import APITestMixin, format_date_or_datetime, random_foreign_country
 from datahub.omis.market.models import Market
 from ..factories import (
     OrderAssigneeCompleteFactory, OrderAssigneeFactory,
@@ -33,7 +33,7 @@ class TestAddOrder(APITestMixin):
         """Test a successful call to create an Order with all possible fields."""
         company = CompanyFactory()
         contact = ContactFactory(company=company)
-        country = Country.france.value
+        country = random_foreign_country()
         uk_region = UKRegion.jersey.value
         sector = Sector.renewable_energy_wind.value
         service_type = ServiceType.objects.filter(disabled_on__isnull=True).first()
@@ -155,7 +155,7 @@ class TestAddOrder(APITestMixin):
         """Test a successful call to create an Order without optional fields."""
         company = CompanyFactory()
         contact = ContactFactory(company=company)
-        country = Country.france.value
+        country = random_foreign_country()
 
         url = reverse('api-v3:omis:order:list')
         response = self.api_client.post(
@@ -204,7 +204,7 @@ class TestAddOrder(APITestMixin):
         """
         company = CompanyFactory()
         contact = ContactFactory()  # doesn't work at `company`
-        country = Country.france.value
+        country = random_foreign_country()
 
         url = reverse('api-v3:omis:order:list')
         response = self.api_client.post(
@@ -246,7 +246,7 @@ class TestAddOrder(APITestMixin):
             {
                 'company': {'id': company.pk},
                 'contact': {'id': ContactFactory(company=company).pk},
-                'primary_market': {'id': Country.france.value.id},
+                'primary_market': {'id': random_foreign_country().pk},
                 'service_types': [
                     {'id': disabled_service_type.pk},
                 ],
@@ -313,7 +313,7 @@ class TestAddOrder(APITestMixin):
         """Test that if legacy fields are passed in when creating an order, they get ignored."""
         company = CompanyFactory()
         contact = ContactFactory(company=company)
-        country = Country.france.value
+        country = random_foreign_country()
 
         url = reverse('api-v3:omis:order:list')
         response = self.api_client.post(
@@ -355,7 +355,7 @@ class TestAddOrder(APITestMixin):
         """
         company = CompanyFactory()
         contact = ContactFactory(company=company)
-        country = Country.canada.value
+        country = random_foreign_country()
 
         url = reverse('api-v3:omis:order:list')
         response = self.api_client.post(
@@ -383,7 +383,7 @@ class TestAddOrder(APITestMixin):
         """
         company = CompanyFactory()
         contact = ContactFactory(company=company)
-        country = Country.france.value
+        country = random_foreign_country()
 
         url = reverse('api-v3:omis:order:list')
         response = self.api_client.post(
@@ -781,7 +781,7 @@ class TestChangeOrderInDraft(APITestMixin):
         'field,value',
         (
             ('company', lambda o: CompanyFactory().pk),
-            ('primary_market', Country.greece.value.id),
+            ('primary_market', lambda o: random_foreign_country().pk),
         )
     )
     def test_cannot_change_disallowed_fields(self, field, value):
@@ -832,13 +832,15 @@ class TestChangeOrderInQuoteStatuses(APITestMixin):
         )
         new_contact = ContactFactory(company=order.company)
 
+        country = random_foreign_country()
+
         data = {
             'billing_address_1': 'New billing address 1',
             'billing_address_2': 'New billing address 2',
             'billing_address_town': 'New billing town',
             'billing_address_county': 'New billing county',
             'billing_address_postcode': 'New billing postcode',
-            'billing_address_country': Country.france.value.id,
+            'billing_address_country': country.pk,
             'vat_status': VATStatus.eu,
             'vat_number': '987654321',
             'vat_verified': False,
@@ -855,8 +857,8 @@ class TestChangeOrderInQuoteStatuses(APITestMixin):
         } == {
             **data,
             'billing_address_country': {
-                'id': Country.france.value.id,
-                'name': Country.france.value.name,
+                'id': str(country.pk),
+                'name': country.name,
             },
             'contact': {
                 'id': str(new_contact.pk),
@@ -875,7 +877,7 @@ class TestChangeOrderInQuoteStatuses(APITestMixin):
         'field,value',
         (
             ('company', lambda o: CompanyFactory().pk),
-            ('primary_market', Country.greece.value.id),
+            ('primary_market', lambda o: random_foreign_country().pk),
 
             (
                 'service_types',
@@ -939,7 +941,8 @@ class TestChangeOrderInQuoteStatuses(APITestMixin):
             ('billing_address_town', 'New billing town'),
             ('billing_address_county', 'New billing county'),
             ('billing_address_postcode', 'New billing postcode'),
-            ('billing_address_country', Country.france.value.id),
+            # Original country is UK
+            ('billing_address_country', random_foreign_country),
             ('vat_status', VATStatus.eu),
             ('vat_number', '987654321'),
             ('vat_verified', False),
@@ -957,6 +960,8 @@ class TestChangeOrderInQuoteStatuses(APITestMixin):
             vat_verified=True,
         )
         old_invoice = order.invoice
+        if callable(value):
+            value = value()
 
         url = reverse('api-v3:omis:order:detail', kwargs={'pk': order.pk})
         response = self.api_client.patch(url, {field: value}, format='json')
@@ -1063,7 +1068,7 @@ class TestChangeOrderInPaid(APITestMixin):
         'field,value',
         (
             ('company', lambda o: CompanyFactory().pk),
-            ('primary_market', Country.greece.value.id),
+            ('primary_market', lambda o: random_foreign_country()),
 
             (
                 'service_types',
@@ -1082,7 +1087,7 @@ class TestChangeOrderInPaid(APITestMixin):
             ('billing_address_town', 'New billing town'),
             ('billing_address_county', 'New billing county'),
             ('billing_address_postcode', 'New billing postcode'),
-            ('billing_address_country', Country.france.value.id),
+            ('billing_address_country', lambda o: random_foreign_country()),
             ('vat_status', VATStatus.uk),
             ('vat_number', '987654321'),
             ('vat_verified', False),
@@ -1150,7 +1155,7 @@ class TestChangeOrderInEndStatuses(APITestMixin):
         'field,value',
         (
             ('company', lambda o: CompanyFactory().pk),
-            ('primary_market', Country.greece.value.id),
+            ('primary_market', lambda o: random_foreign_country()),
 
             (
                 'service_types',
@@ -1169,7 +1174,7 @@ class TestChangeOrderInEndStatuses(APITestMixin):
             ('billing_address_town', 'New billing town'),
             ('billing_address_county', 'New billing county'),
             ('billing_address_postcode', 'New billing postcode'),
-            ('billing_address_country', Country.france.value.id),
+            ('billing_address_country', lambda o: random_foreign_country()),
             ('vat_status', VATStatus.uk),
             ('vat_number', '987654321'),
             ('vat_verified', False),

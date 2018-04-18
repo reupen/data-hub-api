@@ -4,6 +4,7 @@ from random import randrange, sample
 import factory
 
 from datahub.core import constants
+from datahub.core.test_utils import random_country
 from datahub.metadata.models import Service
 
 
@@ -37,7 +38,7 @@ class TeamFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'name {n}')
     role = factory.SubFactory(TeamRoleFactory)
     uk_region_id = constants.UKRegion.east_midlands.value.id
-    country_id = constants.Country.france.value.id
+    country_id = factory.LazyFunction(random_country)
 
     class Meta:
         model = 'metadata.Team'

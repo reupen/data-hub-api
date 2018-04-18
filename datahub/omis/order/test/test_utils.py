@@ -5,6 +5,7 @@ from datahub.company.test.factories import (
     CompaniesHouseCompanyFactory, CompanyFactory, ContactFactory
 )
 from datahub.core import constants
+from datahub.core.test_utils import random_country
 from .factories import OrderFactory
 from ..utils import populate_billing_data
 
@@ -19,7 +20,7 @@ class CompanyWithRegAddressFactory(CompanyFactory):
     registered_address_town = factory.Faker('text')
     registered_address_county = factory.Faker('text')
     registered_address_postcode = factory.Faker('text')
-    registered_address_country_id = constants.Country.japan.value.id
+    registered_address_country_id = factory.LazyFunction(random_country())
     company_number = factory.LazyFunction(
         lambda: CompaniesHouseCompanyFactory().company_number
     )

@@ -9,12 +9,20 @@ from reversion.models import Version
 
 from datahub.company.constants import BusinessTypeConstant
 from datahub.company.models import CompaniesHouseCompany, Company
-from datahub.company.test.factories import CompaniesHouseCompanyFactory, CompanyFactory
+from datahub.company.test.factories import (
+    CompaniesHouseCompanyFactory, CompanyFactory, ForeignCompanyFactory, UKCompanyFactory,
+)
 from datahub.core.constants import (
     CompanyClassification, Country, HeadquarterType, Sector, UKRegion
 )
 from datahub.core.reversion import EXCLUDED_BASE_MODEL_FIELDS
-from datahub.core.test_utils import APITestMixin, create_test_user, format_date_or_datetime
+from datahub.core.test_utils import (
+    APITestMixin,
+    create_test_user,
+    format_date_or_datetime,
+    random_foreign_country,
+    random_obj_for_model,
+)
 from datahub.investment.test.factories import InvestmentProjectFactory
 from datahub.metadata.test.factories import TeamFactory
 
@@ -109,16 +117,14 @@ class TestGetCompany(APITestMixin):
             name='Foo Ltd',
             registered_address_1='Hello St',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id
         )
-        company = CompanyFactory(
+        company = UKCompanyFactory(
             company_number=123,
             name='Bar Ltd',
             alias='Xyz trading',
             vat_number='009485769',
             registered_address_1='Goodbye St',
             registered_address_town='Barland',
-            registered_address_country_id=Country.united_kingdom.value.id
         )
         user = create_test_user(
             permission_codenames=(
@@ -225,11 +231,10 @@ class TestGetCompany(APITestMixin):
         Checks that that the registered name and address are coming from the
         company record.
         """
-        company = CompanyFactory(
+        company = ForeignCompanyFactory(
             name='Foo ltd.',
             registered_address_1='Hello st.',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id,
             headquarter_type_id=HeadquarterType.ukhq.value.id,
             classification_id=CompanyClassification.tier_a.value.id,
         )
@@ -282,11 +287,10 @@ class TestGetCompany(APITestMixin):
 
     def test_get_company_investment_projects(self):
         """Tests investment project properties in the company item view."""
-        company = CompanyFactory(
+        company = ForeignCompanyFactory(
             name='Foo ltd.',
             registered_address_1='Hello st.',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id,
             headquarter_type_id=HeadquarterType.ukhq.value.id,
             classification_id=CompanyClassification.tier_a.value.id,
         )
@@ -353,7 +357,6 @@ class TestUpdateCompany(APITestMixin):
             name='Foo ltd.',
             registered_address_1='Hello st.',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id
         )
 
         # now update it
@@ -376,16 +379,14 @@ class TestUpdateCompany(APITestMixin):
             name='Foo Ltd',
             registered_address_1='Hello St',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id
         )
-        company = CompanyFactory(
+        company = UKCompanyFactory(
             company_number=123,
             name='Bar Ltd',
             alias='Xyz trading',
             vat_number='009485769',
             registered_address_1='Goodbye St',
             registered_address_town='Barland',
-            registered_address_country_id=Country.united_kingdom.value.id
         )
 
         url = reverse('api-v3:company:item', kwargs={'pk': company.pk})
@@ -394,7 +395,7 @@ class TestUpdateCompany(APITestMixin):
             'name': 'New name',
             'registered_address_1': 'New address 1',
             'registered_address_town': 'New town',
-            'registered_address_country': Country.united_states.value.id,
+            'registered_address_country': random_foreign_country().pk,
         }
 
         response = self.api_client.patch(url, format='json', data=update_data)
@@ -403,15 +404,15 @@ class TestUpdateCompany(APITestMixin):
         assert response.data['name'] == update_data['name']
         assert response.data['registered_address_1'] == update_data['registered_address_1']
         assert response.data['registered_address_town'] == update_data['registered_address_town']
-        assert response.data['registered_address_country']['id'] == Country.united_states.value.id
+        assert (response.data['registered_address_country']['id']
+                == update_data['registered_address_country'])
 
     def test_update_read_only_fields(self):
         """Test updating read-only fields."""
-        company = CompanyFactory(
+        company = ForeignCompanyFactory(
             name='Foo ltd.',
             registered_address_1='Hello st.',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id,
             reference_code='ORG-345645',
             archived_documents_url_path='old_path',
         )
@@ -428,11 +429,10 @@ class TestUpdateCompany(APITestMixin):
 
     def test_long_trading_name(self):
         """Test that providing a long trading name doesn't return a 500."""
-        company = CompanyFactory(
+        company = ForeignCompanyFactory(
             name='Foo ltd.',
             registered_address_1='Hello st.',
             registered_address_town='Fooland',
-            registered_address_country_id=Country.united_states.value.id
         )
 
         url = reverse('api-v3:company:item', kwargs={'pk': company.pk})
@@ -457,7 +457,7 @@ class TestUpdateCompany(APITestMixin):
             'name': 'Foo ltd.',
             'registered_address_1': 'Hello st.',
             'registered_address_town': 'Fooland',
-            'registered_address_country_id': Country.united_states.value.id,
+            'registered_address_country_id': random_obj_for_model(Country),
             f'{field}_id': value
         }
         company = CompanyFactory(**creation_data)
@@ -482,7 +482,7 @@ class TestUpdateCompany(APITestMixin):
             'name': 'Foo ltd.',
             'registered_address_1': 'Hello st.',
             'registered_address_town': 'Fooland',
-            'registered_address_country_id': Country.united_states.value.id,
+            'registered_address_country_id': random_obj_for_model(Country),
             f'{field}_id': None
         }
         company = CompanyFactory(**creation_data)
@@ -690,7 +690,7 @@ class TestAddCompany(APITestMixin):
             'business_type': {'id': BusinessTypeConstant.company.value.id},
             'sector': {'id': Sector.aerospace_assembly_aircraft.value.id},
             'registered_address_country': {
-                'id': Country.united_states.value.id
+                'id': random_foreign_country().pk
             },
             'registered_address_1': '75 Stramford Road',
             'registered_address_town': 'London',
@@ -905,7 +905,7 @@ class TestAddCompany(APITestMixin):
             'company_number': 'BR000006',
             'sector': {'id': Sector.aerospace_assembly_aircraft.value.id},
             'registered_address_country': {
-                'id': Country.united_states.value.id
+                'id': random_foreign_country().pk
             },
             'registered_address_1': '75 Stramford Road',
             'registered_address_town': 'London',

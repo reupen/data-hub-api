@@ -7,6 +7,7 @@ from django.utils.timezone import now, utc
 from datahub.company.test.factories import AdviserFactory, CompanyFactory, ContactFactory
 from datahub.core.constants import Country, Sector, UKRegion
 from datahub.core.test.factories import to_many_field
+from datahub.core.test_utils import random_foreign_country
 from datahub.omis.invoice.models import Invoice
 from datahub.omis.quote.test.factories import (
     AcceptedQuoteFactory, CancelledQuoteFactory, QuoteFactory
@@ -23,7 +24,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
     modified_by = factory.SubFactory(AdviserFactory)
     company = factory.SubFactory(CompanyFactory)
     contact = factory.LazyAttribute(lambda o: ContactFactory(company=o.company))
-    primary_market_id = Country.france.value.id
+    primary_market_id = factory.LazyFunction(random_foreign_country)
     sector_id = Sector.aerospace_assembly_aircraft.value.id
     uk_region_id = UKRegion.england.value.id
     description = factory.Faker('text')

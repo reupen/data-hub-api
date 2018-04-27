@@ -2,7 +2,6 @@ from functools import lru_cache
 from importlib import import_module
 
 from django.apps import AppConfig
-from django.conf import settings
 
 
 SEARCH_APPS = [
@@ -40,7 +39,7 @@ class SearchApp:
         Makes sure mappings exist in Elasticsearch.
         This call is idempotent.
         """
-        self.es_model.init(index=settings.ES_INDEX)
+        self.es_model.configure_index()
 
     def connect_signals(self):
         """

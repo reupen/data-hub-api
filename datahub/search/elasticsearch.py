@@ -3,13 +3,10 @@ from urllib.parse import urlparse
 
 from aws_requests_auth.aws_auth import AWSRequestsAuth
 from django.conf import settings
-from django_pglocks import advisory_lock
 from elasticsearch import RequestsHttpConnection
 from elasticsearch.helpers import bulk as es_bulk
 from elasticsearch_dsl import analysis, Index
 from elasticsearch_dsl.connections import connections
-
-from datahub.search.apps import get_search_apps
 
 
 logger = getLogger(__name__)
@@ -123,36 +120,80 @@ def get_client():
     return connections.get_connection()
 
 
-def index_exists(name=settings.ES_INDEX):
-    """
-    :param name: Name of the index
-
-    :returns: True if index_name exists
-    """
-    return get_client().indices.exists(index=name)
+def index_exists(index_name):
+    """Checks if an index exists."""
+    client = get_client()
+    return client.indices.exists(index_name)
 
 
-def configure_index(index_name, index_settings=None):
+def create_index(index_name, index_settings=None):
     """Configures Elasticsearch index."""
-    if not index_exists(name=index_name):
-        index = Index(index_name)
-        for analyzer in ANALYZERS:
-            index.analyzer(analyzer)
+    index = Index(index_name)
+    for analyzer in ANALYZERS:
+        index.analyzer(analyzer)
 
-        if index_settings:
-            index.settings(**index_settings)
-        index.create()
+    if index_settings:
+        index.settings(**index_settings)
+    index.create()
+
+
+def delete_index(index_name):
+    """Deletes an index"""
+    client = get_client()
+    client.indices.delete(index_name)
+
+
+def get_indices_for_alias(alias):
+    """Gets the indices referenced by an alias."""
+    client = get_client()
+    return list(client.indices.get_alias(name=alias).keys())
+
+def get_aliases_for_index(index):
+    """Gets the aliases referencing an index."""
+    client = get_client()
+    return client.indices.get_alias(index=index).keys() - {index}
+
+
+def alias_exists(alias):
+    """Checks if an alias exists."""
+    client = get_client()
+    return client.indices.exists_alias(name=alias)
+
+
+def update_alias(alias, add_indices=(), remove_indices=()):
+    """Updates the indices associated with an alias."""
+    client = get_client()
+
+    actions = []
+
+    if remove_indices:
+        actions.append({
+            'remove': {
+                'alias': alias,
+                'indices': remove_indices
+            }
+        })
+
+    if add_indices:
+        actions.append({
+            'add': {
+                'alias': alias,
+                'indices': add_indices
+            }
+        })
+
+    client.indices.update_aliases(body={
+        'actions': actions
+    })
 
 
 def init_es():
     """Creates the Elasticsearch index if it doesn't exist, and updates the mapping."""
     logger.info('Creating Elasticsearch index and initialising mapping...')
+    from datahub.search.apps import get_search_apps
 
-    with advisory_lock('leeloo_init_es'):
-        configure_index(settings.ES_INDEX, index_settings=settings.ES_INDEX_SETTINGS)
-
-        for search_app in get_search_apps():
-            search_app.init_es()
+    for search_app in get_search_apps():
+        search_app.init_es()
 
     logger.info('Elasticsearch index and mapping initialised')
 

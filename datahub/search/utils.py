@@ -1,3 +1,7 @@
+import json
+from collections.abc import Mapping
+
+
 def get_model_fields(es_model):
     """Gets the field objects for an ES model."""
     return es_model._doc_type.mapping.properties._params['properties']
@@ -29,3 +33,18 @@ def get_model_non_mapped_field_names(es_model):
         - es_model.MAPPINGS.keys()
         - es_model.COMPUTED_MAPPINGS.keys()
     )
+
+
+def get_normalised_mapping_as_bytes(mapping_dict):
+    """Normalises an ES mapping dict."""
+    mapping = _normalise_mapping_item(None, mapping_dict)
+    return json.dumps(mapping, sort_keys=True, separators=(',', ':')).encode('utf-8')
+
+
+def _normalise_mapping_item(key, val):
+    if not isinstance(val, Mapping):
+        if key == 'copy_to' and isinstance(val, str):
+            return [val]
+        return val
+
+    return {subkey: _normalise_mapping_item(subkey, subval) for subkey, subval in val.items()}

@@ -1,7 +1,6 @@
 from collections import defaultdict
 from itertools import chain
 
-from django.conf import settings
 from elasticsearch_dsl import Q, Search
 from elasticsearch_dsl.query import Bool, MatchPhrase, MultiMatch, Query, Term
 
@@ -21,7 +20,7 @@ class MatchNone(Query):
 
 def delete_document(model, document_id):
     """Deletes specified model's document."""
-    doc = model(_id=document_id, _index=settings.ES_INDEX)
+    doc = model(_id=document_id, _index=model.get_write_alias())
     doc.delete()
 
 
@@ -45,7 +44,8 @@ def get_basic_search_query(
     """
     limit = _clip_limit(offset, limit)
 
-    all_models = (search_app.es_model for search_app in get_search_apps())
+    all_models = [search_app.es_model for search_app in get_search_apps()]
+    indices = [model.get_read_alias() for model in all_models]
     fields = set(chain.from_iterable(entity.SEARCH_FIELDS for entity in all_models))
 
     # Sort the fields so that this function is deterministic
@@ -53,7 +53,7 @@ def get_basic_search_query(
     fields = sorted(fields)
 
     query = _build_term_query(term, fields=fields)
-    search = Search(index=settings.ES_INDEX).query(query)
+    search = Search(index=indices).query(query)
 
     permission_query = _build_global_permission_query(permission_filters_by_entity)
     if permission_query:
@@ -97,7 +97,7 @@ def get_search_by_entity_query(
     # document must match all filters in the list (and)
     must_filter = _build_must_queries(filters, ranges, composite_field_mapping)
 
-    s = Search(index=settings.ES_INDEX).query('bool', must=query)
+    s = Search(index=entity.get_read_alias()).query('bool', must=query)
 
     permission_query = _build_entity_permission_query(permission_filters)
     if permission_query:

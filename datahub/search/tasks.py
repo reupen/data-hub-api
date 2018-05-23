@@ -34,7 +34,7 @@ def sync_model(search_app_name):
 
 
 @shared_task(acks_late=True, priority=7)
-def migrate_model(search_app_cls_path):
+def migrate_model(search_app_name):
     """Completes a migration by performing a full resync."""
-    search_app = get_search_app(search_app_cls_path)
+    search_app = get_search_app(search_app_name)
     resync_after_migrate(search_app)

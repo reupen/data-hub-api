@@ -44,15 +44,14 @@ def test_configure_connection(connections, settings):
     })
 
 
-def test_configure_index_creates_index_if_it_doesnt_exist(mock_es_client):
-    """Test that configure_index() creates the index when it doesn't exist."""
+def test_creates_index(mock_es_client):
+    """Test creates_index()."""
     index = 'test-index'
     index_settings = {
         'testsetting1': 'testval1'
     }
     connection = mock_es_client.return_value
-    connection.indices.exists.return_value = False
-    elasticsearch.configure_index(index, index_settings=index_settings)
+    elasticsearch.create_index(index, index_settings=index_settings)
     connection.indices.create.assert_called_once_with(
         index='test-index',
         body={
@@ -121,13 +120,8 @@ def test_configure_index_creates_index_if_it_doesnt_exist(mock_es_client):
 def test_configure_index_doesnt_create_index_if_it_exists(mock_es_client):
     """Test that configure_index() doesn't create the index when it already exists."""
     index = 'test-index'
-    index_settings = {
-        'testsetting1': 'testval1'
-    }
     connection = mock_es_client.return_value
-    connection.indices.exists.return_value = True
-    elasticsearch.configure_index(index, index_settings=index_settings)
-    connection.indices.create.assert_not_called()
+    assert elasticsearch.index_exists(index) is connection.indices.exists.return_value
 
 
 @pytest.mark.django_db

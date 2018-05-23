@@ -14,10 +14,7 @@ def resync_after_migrate(search_app):
     read_alias = search_app.es_model.get_read_alias()
     write_alias = search_app.es_model.get_write_alias()
 
-    read_indices = get_indices_for_alias(read_alias)
-    write_indices = get_indices_for_alias(write_alias)
-
-    indices_to_remove = read_indices - write_indices
+    indices_to_remove = get_indices_for_alias(read_alias) - get_indices_for_alias(write_alias)
 
     update_alias(read_alias, remove_indices=tuple(indices_to_remove))
 

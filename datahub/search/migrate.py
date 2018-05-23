@@ -54,11 +54,8 @@ def migrate_app(search_app):
         remove_indices=(current_write_index,)
     )
 
-    # FIXME
-    search_app_cls_path = f'{search_app.__class__.__module__}.{search_app.__class__.__name__}'
-
     logger.info('Submitting resync task for the %s search app to Celery', app_name)
 
     migrate_model.apply_async(
-        args=(search_app_cls_path,)
+        args=(app_name,)
     )

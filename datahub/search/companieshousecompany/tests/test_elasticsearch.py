@@ -122,13 +122,13 @@ def test_indexed_doc(setup_es):
     setup_es.indices.refresh()
 
     indexed_ch_company = setup_es.get(
-        index=settings.ES_INDEX,
+        index=ESCompaniesHouseCompany.get_write_index(),
         doc_type=CompaniesHouseCompanySearchApp.name,
         id=ch_company.pk
     )
 
     assert indexed_ch_company == {
-        '_index': settings.ES_INDEX,
+        '_index': ESCompaniesHouseCompany.get_target_index_name(),
         '_type': CompaniesHouseCompanySearchApp.name,
         '_id': str(ch_company.pk),
         '_version': indexed_ch_company['_version'],

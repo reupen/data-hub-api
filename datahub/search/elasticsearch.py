@@ -146,7 +146,7 @@ def delete_index(index_name):
 def get_indices_for_alias(alias):
     """Gets the indices referenced by an alias."""
     client = get_client()
-    return list(client.indices.get_alias(name=alias).keys())
+    return client.indices.get_alias(name=alias).keys()
 
 def get_aliases_for_index(index):
     """Gets the aliases referencing an index."""

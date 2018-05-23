@@ -41,12 +41,7 @@ def migrate_app(search_app):
     current_read_indices = es_model.get_read_indices()
     current_write_index = es_model.get_write_index()
 
-    if len(current_read_indices) != 1:
-        # TODO: Attempt to handle this
-        raise DataHubException('Cannot migrate Elasticsearch index with alias referencing '
-                               'multiple indices')
-
-    if current_read_indices[0] != current_write_index:
+    if current_write_index not in current_read_indices:
         raise DataHubException('Cannot migrate Elasticsearch index with read alias referencing '
                                'a different index to write alias')
 
@@ -62,8 +57,8 @@ def migrate_app(search_app):
     # FIXME
     search_app_cls_path = f'{search_app.__class__.__module__}.{search_app.__class__.__name__}'
 
-    logger.info('Submitting reindexing and resync task for the %s search app to Celery', app_name)
+    logger.info('Submitting resync task for the %s search app to Celery', app_name)
 
     migrate_model.apply_async(
-        args=(search_app_cls_path, current_write_index, new_index_name)
+        args=(search_app_cls_path,)
     )

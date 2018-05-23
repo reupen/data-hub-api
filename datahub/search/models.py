@@ -43,7 +43,7 @@ class BaseESModel(DocType):
         indices = get_indices_for_alias(cls.get_write_alias())
         if len(indices) != 1:
             raise DataHubException()
-        return indices[0]
+        return next(iter(indices))
 
     @classmethod
     def get_index_prefix(cls):
@@ -75,12 +75,14 @@ class BaseESModel(DocType):
     @classmethod
     def configure_index(cls):
         """Configures Elasticsearch index."""
-        # TODO: Handle migration from single index?
-
         index_name = cls.get_target_index_name()
         if not index_exists(index_name):
-            create_index(index_name, index_settings=settings.ES_INDEX_SETTINGS)
-            cls.init(index_name)
+            # Handle migration from the legacy single-index set-up
+            if index_exists(settings.ES_INDEX):
+                index_name = settings.ES_INDEX
+            else:
+                create_index(index_name, index_settings=settings.ES_INDEX_SETTINGS)
+                cls.init(index_name)
 
         if not alias_exists(cls.get_read_alias()):
             update_alias(cls.get_read_alias(), add_indices=(index_name,))

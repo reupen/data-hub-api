@@ -2,11 +2,7 @@ from celery import shared_task
 
 from datahub.search.apps import get_search_app, get_search_apps
 from datahub.search.bulk_sync import sync_app
-from datahub.search.migrate_utils import (
-    DEFAULT_REINDEX_TIMEOUT,
-    reindex_model,
-    resync_after_migrate,
-)
+from datahub.search.migrate_utils import resync_after_migrate
 
 
 @shared_task(acks_late=True, priority=9)
@@ -38,20 +34,7 @@ def sync_model(search_app_name):
 
 
 @shared_task(acks_late=True, priority=7)
-def migrate_model(search_app_cls_path, old_index, new_index, timeout=DEFAULT_REINDEX_TIMEOUT):
-    """Performs reindexing and schedules a resync of a model during a migration."""
-    search_app = get_search_app(search_app_cls_path)
-    reindex_model(search_app, old_index, new_index, timeout=timeout)
-
-    # TODO: Resync models modified during reindexing
-
-    complete_model_migration.apply_async(
-        args=(search_app_cls_path, old_index)
-    )
-
-
-@shared_task(acks_late=True, priority=7)
-def complete_model_migration(search_app_cls_path, old_index):
+def migrate_model(search_app_cls_path):
     """Completes a migration by performing a full resync."""
     search_app = get_search_app(search_app_cls_path)
-    resync_after_migrate(search_app, old_index)
+    resync_after_migrate(search_app)

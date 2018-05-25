@@ -24,10 +24,8 @@ def migrate_app(search_app):
 
     search_app.init_es()
 
-    # TODO: Compare the mappings and work out if only fields have been added. (Just update the
-    # mapping and resync in that case.)
-
-    needs_migration = es_model.get_current_mapping_hash() != es_model.get_target_mapping_hash()
+    target_mapping_hash = es_model.get_target_mapping_hash()
+    needs_migration = es_model.get_current_mapping_hash() != target_mapping_hash
     if not needs_migration:
         logger.info('%s search app index is up to date', app_name)
         return
@@ -42,10 +40,12 @@ def migrate_app(search_app):
     current_write_index = es_model.get_write_index()
 
     if current_write_index not in current_read_indices:
-        raise DataHubException('Cannot migrate Elasticsearch index with read alias referencing '
-                               'a different index to write alias')
+        raise DataHubException('Cannot migrate Elasticsearch index with a read alias referencing '
+                               'a different index to the write alias')
 
     logger.info('Updating aliases for the %s search app', app_name)
+
+    es_model.create_index(new_index_name)
 
     update_alias(read_alias_name, add_indices=(new_index_name,))
     update_alias(
@@ -56,6 +56,4 @@ def migrate_app(search_app):
 
     logger.info('Submitting resync task for the %s search app to Celery', app_name)
 
-    migrate_model.apply_async(
-        args=(app_name,)
-    )
+    migrate_model.apply_async(args=(app_name, target_mapping_hash))

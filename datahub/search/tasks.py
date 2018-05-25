@@ -1,8 +1,12 @@
 from celery import shared_task
+from celery.utils.log import get_task_logger
 
 from datahub.search.apps import get_search_app, get_search_apps
 from datahub.search.bulk_sync import sync_app
 from datahub.search.migrate_utils import resync_after_migrate
+
+
+logger = get_task_logger(__name__)
 
 
 @shared_task(acks_late=True, priority=9)
@@ -33,8 +37,15 @@ def sync_model(search_app_name):
     sync_app(search_app)
 
 
-@shared_task(acks_late=True, priority=7)
-def migrate_model(search_app_name):
+@shared_task(bind=True, acks_late=True, priority=7, max_retries=5, default_retry_delay=60)
+def migrate_model(self, search_app_name, new_mapping_hash):
     """Completes a migration by performing a full resync."""
     search_app = get_search_app(search_app_name)
+    if search_app.es_model.get_target_mapping_hash() != new_mapping_hash:
+        logger.info(
+            f'Unexpected target mapping hash, an old app instance may have received this task. '
+            f'Rescheduling {search_app_name} search app migration...'
+        )
+        self.retry()
+
     resync_after_migrate(search_app)

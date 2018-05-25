@@ -1,7 +1,5 @@
 from unittest import mock
 
-import pytest
-
 from .. import elasticsearch
 
 
@@ -122,18 +120,3 @@ def test_configure_index_doesnt_create_index_if_it_exists(mock_es_client):
     index = 'test-index'
     connection = mock_es_client.return_value
     assert elasticsearch.index_exists(index) is connection.indices.exists.return_value
-
-
-@pytest.mark.django_db
-@mock.patch('datahub.search.elasticsearch.configure_index')
-@mock.patch('datahub.search.elasticsearch.get_search_apps')
-def test_init_es(get_search_apps_mock, configure_index_mock):
-    """Test that init_es() calls configure_index() and init_es() on each search app."""
-    apps = [mock.Mock(), mock.Mock()]
-    get_search_apps_mock.return_value = apps
-
-    elasticsearch.init_es()
-
-    configure_index_mock.assert_called_once()
-    apps[0].init_es.assert_called_once()
-    apps[1].init_es.assert_called_once()

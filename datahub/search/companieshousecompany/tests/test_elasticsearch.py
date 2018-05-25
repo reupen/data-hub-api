@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from elasticsearch_dsl import Mapping
 
 from datahub.company.test.factories import (
@@ -15,7 +14,10 @@ pytestmark = pytest.mark.django_db
 
 def test_mapping(setup_es):
     """Test the ES mapping for a companies house company."""
-    mapping = Mapping.from_es(settings.ES_INDEX, CompaniesHouseCompanySearchApp.name)
+    mapping = Mapping.from_es(
+        CompaniesHouseCompanySearchApp.es_model.get_target_index_name(),
+        CompaniesHouseCompanySearchApp.name,
+    )
 
     assert mapping.to_dict() == {
         'companieshousecompany': {

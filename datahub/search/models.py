@@ -19,6 +19,14 @@ class BaseESModel(DocType):
 
     SEARCH_FIELDS = ()
 
+    # Fields that have been renamed in some way, and were used as part of a filter.
+    # While an index migration is in progress, a composite filter must be used so that the
+    # filter works with both the old and new index.
+    # Such fields should be listed in this attribute it make it clear why they're being referenced.
+    # Once the migration is complete in all environments, the composite filter can be updated
+    # and the field removed from here.
+    PREVIOUS_MAPPING_FIELDS = ()
+
     class Meta:
         dynamic = MetaField('false')
 
@@ -73,22 +81,29 @@ class BaseESModel(DocType):
         return f'{prefix}{mapping_hash}'
 
     @classmethod
-    def configure_index(cls):
+    def initialise_index(cls):
         """Configures Elasticsearch index."""
-        index_name = cls.get_target_index_name()
-        if not index_exists(index_name):
+        read_alias_exists = alias_exists(cls.get_read_alias())
+        write_alias_exists = alias_exists(cls.get_write_alias())
+
+        if not write_alias_exists:
             # Handle migration from the legacy single-index set-up
             if index_exists(settings.ES_INDEX):
                 index_name = settings.ES_INDEX
             else:
-                create_index(index_name, index_settings=settings.ES_INDEX_SETTINGS)
-                cls.init(index_name)
+                index_name = cls.get_target_index_name()
+                cls.create_index(index_name)
 
-        if not alias_exists(cls.get_read_alias()):
-            update_alias(cls.get_read_alias(), add_indices=(index_name,))
-
-        if not alias_exists(cls.get_write_alias()):
             update_alias(cls.get_write_alias(), add_indices=(index_name,))
+
+        if not read_alias_exists:
+            update_alias(cls.get_read_alias(), add_indices=(cls.get_write_index(),))
+
+    @classmethod
+    def create_index(cls, index_name):
+        """Creates an index with this model's mapping."""
+        create_index(index_name, index_settings=settings.ES_INDEX_SETTINGS)
+        cls.init(index_name)
 
     @classmethod
     def es_document(cls, dbmodel):

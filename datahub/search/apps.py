@@ -39,7 +39,7 @@ class SearchApp:
         Makes sure mappings exist in Elasticsearch.
         This call is idempotent.
         """
-        self.es_model.configure_index()
+        self.es_model.initialise_index()
 
     def connect_signals(self):
         """

@@ -139,6 +139,7 @@ def create_index(index_name, index_settings=None):
 
 def delete_index(index_name):
     """Deletes an index"""
+    logger.info(f'Deleting the {index_name} index...')
     client = get_client()
     client.indices.delete(index_name)
 
@@ -162,8 +163,8 @@ def alias_exists(alias):
 
 def update_alias(alias, add_indices=(), remove_indices=()):
     """Updates the indices associated with an alias."""
+    logger.info(f'Adding {add_indices} and removing {remove_indices} from the {alias} alias...')
     client = get_client()
-
     actions = []
 
     if remove_indices:

@@ -19,17 +19,28 @@ def migrate_apps(app_names=None):
 
 def migrate_app(search_app):
     """Migrates a search app to a new index (if its mapping is out of date)."""
-    es_model = search_app.es_model
     app_name = search_app.name
+    es_model = search_app.es_model
 
     search_app.init_es()
 
     target_mapping_hash = es_model.get_target_mapping_hash()
     needs_migration = es_model.get_current_mapping_hash() != target_mapping_hash
-    if not needs_migration:
-        logger.info('%s search app index is up to date', app_name)
+    if needs_migration:
+        _perform_migration(search_app)
         return
 
+    if len(es_model.get_read_indices()) != 1:
+        logger.info('Possibly incomplete %s search app migration detected', app_name)
+        _schedule_resync(search_app)
+        return
+
+    logger.info('%s search app is up to date', app_name)
+
+
+def _perform_migration(search_app):
+    app_name = search_app.name
+    es_model = search_app.es_model
     logger.info('Migrating the %s search app', app_name)
 
     read_alias_name = es_model.get_read_alias()
@@ -54,6 +65,14 @@ def migrate_app(search_app):
         remove_indices=(current_write_index,)
     )
 
-    logger.info('Submitting resync task for the %s search app to Celery', app_name)
+    _schedule_resync(search_app)
 
-    migrate_model.apply_async(args=(app_name, target_mapping_hash))
+
+def _schedule_resync(search_app):
+    logger.info(
+        'Scheduling resync and clean-up for the %s search app',
+        search_app.name,
+    )
+    migrate_model.apply_async(
+        args=(search_app.name, search_app.es_model.get_target_mapping_hash())
+    )

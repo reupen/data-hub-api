@@ -47,7 +47,7 @@ def migrate_model(self, search_app_name, new_mapping_hash):
             f'Unexpected target mapping hash, an old app instance may have received this task. '
             f'Rescheduling {search_app_name} search app migration...'
         )
-        self.retry()
+        raise self.retry()
 
     with advisory_lock(f'leeloo-resync_after_migrate-{search_app_name}'):
         resync_after_migrate(search_app)

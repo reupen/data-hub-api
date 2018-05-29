@@ -149,10 +149,12 @@ def get_indices_for_alias(alias):
     client = get_client()
     return client.indices.get_alias(name=alias).keys()
 
+
 def get_aliases_for_index(index):
     """Gets the aliases referencing an index."""
     client = get_client()
-    return client.indices.get_alias(index=index).keys() - {index}
+    alias_response = client.indices.get_alias(index=index)
+    return alias_response[index]['aliases'].keys()
 
 
 def alias_exists(alias):
@@ -163,6 +165,9 @@ def alias_exists(alias):
 
 def update_alias(alias, add_indices=(), remove_indices=()):
     """Updates the indices associated with an alias."""
+    if not (add_indices or remove_indices):
+        raise ValueError('add_indices or remove_indices must be provided')
+
     logger.info(f'Adding {add_indices} and removing {remove_indices} from the {alias} alias...')
     client = get_client()
     actions = []

@@ -117,8 +117,115 @@ def test_creates_index(mock_es_client):
     )
 
 
-def test_configure_index_doesnt_create_index_if_it_exists(mock_es_client):
-    """Test that configure_index() doesn't create the index when it already exists."""
+def test_delete_index(mock_es_client):
+    """Test delete_index()."""
     index = 'test-index'
-    connection = mock_es_client.return_value
-    assert elasticsearch.index_exists(index) is connection.indices.exists.return_value
+    client = mock_es_client.return_value
+    elasticsearch.delete_index(index)
+    client.indices.delete.assert_called_once_with(index)
+
+
+def test_get_indices_for_alias(mock_es_client):
+    """Test get_indices_for_alias()."""
+    alias = 'test-index'
+    client = mock_es_client.return_value
+    client.indices.get_alias.return_value = {
+        'index1': {'aliases': {'alias1': {}}},
+        'index2': {'aliases': {'alias2': {}}},
+    }
+    assert elasticsearch.get_indices_for_alias(alias) == {'index1', 'index2'}
+    client.indices.get_alias.assert_called_with(name=alias)
+
+
+def test_get_aliases_for_index(mock_es_client):
+    """Test get_aliases_for_index()."""
+    index = 'test-index'
+    client = mock_es_client.return_value
+    client.indices.get_alias.return_value = {
+        index: {
+            'aliases': {
+                'alias1': {},
+                'alias2': {},
+            }
+        }
+    }
+    assert elasticsearch.get_aliases_for_index(index) == {'alias1', 'alias2'}
+    client.indices.get_alias.assert_called_with(index=index)
+
+
+@pytest.mark.parametrize('expected', (True, False))
+def test_alias_exists(mock_es_client, expected):
+    """Test alias_exists()."""
+    index_name = 'test-index'
+
+    client = mock_es_client.return_value
+    client.indices.exists_alias.return_value = expected
+
+    assert elasticsearch.alias_exists(index_name) == expected
+    client.indices.exists_alias.assert_called_with(name=index_name)
+
+
+@pytest.mark.parametrize(
+    'add_indices,remove_indices,expected_body',
+    (
+        (
+            (
+                (),
+                ('index1', 'index2'),
+                {
+                    'actions': [{
+                        'remove': {
+                            'alias': 'test-alias',
+                            'indices': ('index1', 'index2'),
+                        }
+                    }]
+                }
+            ),
+            (
+                ('index1', 'index2'),
+                (),
+                {
+                    'actions': [{
+                        'add': {
+                            'alias': 'test-alias',
+                            'indices': ('index1', 'index2'),
+                        }
+                    }]
+                }
+            ),
+            (
+                ('index1', 'index2'),
+                ('index3', 'index4'),
+                {
+                    'actions': [
+                        {
+                            'remove': {
+                                'alias': 'test-alias',
+                                'indices': ('index3', 'index4'),
+                            }
+                        },
+                        {
+                            'add': {
+                                'alias': 'test-alias',
+                                'indices': ('index1', 'index2'),
+                            }
+                        },
+                    ]
+                }
+            ),
+        )
+    )
+)
+def test_update_alias(mock_es_client, add_indices, remove_indices, expected_body):
+    """Test get_aliases_for_index()."""
+    alias = 'test-alias'
+    client = mock_es_client.return_value
+    elasticsearch.update_alias(alias, add_indices=add_indices, remove_indices=remove_indices)
+    client.indices.update_aliases.assert_called_with(body=expected_body)
+
+
+def test_update_alias_raises_error_with_no_indices(mock_es_client):
+    """Test that update_alias() raises an error if no add or remove indices are passed."""
+    alias = 'test-alias'
+    with pytest.raises(ValueError):
+        elasticsearch.update_alias(alias, add_indices=(), remove_indices=())

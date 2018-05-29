@@ -193,17 +193,6 @@ def update_alias(alias, add_indices=(), remove_indices=()):
     })
 
 
-def init_es():
-    """Creates the Elasticsearch index if it doesn't exist, and updates the mapping."""
-    logger.info('Creating Elasticsearch index and initialising mapping...')
-    from datahub.search.apps import get_search_apps
-
-    for search_app in get_search_apps():
-        search_app.init_es()
-
-    logger.info('Elasticsearch index and mapping initialised')
-
-
 def bulk(actions=None, chunk_size=None, **kwargs):
     """Send data in bulk to Elasticsearch."""
     return es_bulk(get_client(), actions=actions, chunk_size=chunk_size, **kwargs)

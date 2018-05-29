@@ -1,5 +1,6 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django_pglocks import advisory_lock
 
 from datahub.search.apps import get_search_app, get_search_apps
 from datahub.search.bulk_sync import sync_app
@@ -48,4 +49,5 @@ def migrate_model(self, search_app_name, new_mapping_hash):
         )
         self.retry()
 
-    resync_after_migrate(search_app)
+    with advisory_lock(f'leeloo-resync_after_migrate-{search_app_name}'):
+        resync_after_migrate(search_app)

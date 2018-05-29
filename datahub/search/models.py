@@ -33,12 +33,12 @@ class BaseESModel(DocType):
     @classmethod
     def get_read_alias(cls):
         """Gets the alias to be used for read operations."""
-        return f'{settings.ES_INDEX}-{cls._doc_type.name}-read'
+        return f'{settings.ES_INDEX_PREFIX}-{cls._doc_type.name}-read'
 
     @classmethod
     def get_write_alias(cls):
         """Gets the alias to be used for write operations."""
-        return f'{settings.ES_INDEX}-{cls._doc_type.name}-write'
+        return f'{settings.ES_INDEX_PREFIX}-{cls._doc_type.name}-write'
 
     @classmethod
     def get_read_indices(cls):
@@ -56,7 +56,7 @@ class BaseESModel(DocType):
     @classmethod
     def get_index_prefix(cls):
         """Gets the prefix used for indices and aliases."""
-        return f'{settings.ES_INDEX}-{cls._doc_type.name}-'
+        return f'{settings.ES_INDEX_PREFIX}-{cls._doc_type.name}-'
 
     @classmethod
     def get_target_mapping_hash(cls):
@@ -88,8 +88,9 @@ class BaseESModel(DocType):
 
         if not write_alias_exists:
             # Handle migration from the legacy single-index set-up
-            if index_exists(settings.ES_INDEX):
-                index_name = settings.ES_INDEX
+            # TODO: Remove once all environments have been migrated to the new structure
+            if settings.ES_LEGACY_INDEX and index_exists(settings.ES_LEGACY_INDEX):
+                index_name = settings.ES_LEGACY_INDEX
             else:
                 index_name = cls.get_target_index_name()
                 cls.create_index(index_name)

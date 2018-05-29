@@ -45,6 +45,7 @@ def test_migrate_app_with_app_needing_migration(monkeypatch, mock_es_client):
 
     mock_app.es_model.create_index.assert_called_once_with(new_index)
 
+    assert mock_client.indices.update_aliases.call_count == 2
     mock_client.indices.update_aliases.assert_any_call(
         body={
             'actions': [

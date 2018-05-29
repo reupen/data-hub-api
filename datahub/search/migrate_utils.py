@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from datahub.core.exceptions import DataHubException
 from datahub.search.bulk_sync import sync_app
 from datahub.search.elasticsearch import (
     delete_index,
@@ -17,7 +18,13 @@ def resync_after_migrate(search_app):
 
     es_model = search_app.es_model
     read_alias = es_model.get_read_alias()
-    indices_to_remove = es_model.get_read_indices() - {es_model.get_write_index()}
+    read_indices = es_model.get_read_indices()
+    write_index = es_model.get_write_index()
+
+    if write_index not in read_indices:
+        raise DataHubException('Write index not in read alias, aborting mapping migration...')
+
+    indices_to_remove = read_indices - {write_index}
 
     if indices_to_remove:
         update_alias(read_alias, remove_indices=tuple(indices_to_remove))

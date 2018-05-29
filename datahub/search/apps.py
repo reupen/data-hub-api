@@ -69,7 +69,7 @@ class SearchApp:
 
 def get_search_apps():
     """Gets all registered search apps."""
-    return _load_search_apps().values()
+    return tuple(_load_search_apps().values())
 
 
 def get_search_app(app_name):

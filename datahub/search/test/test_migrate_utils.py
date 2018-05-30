@@ -96,7 +96,7 @@ class TestResyncAfterMigrate:
                     {
                         'remove': {
                             'alias': 'test-read-alias',
-                            'indices': ('index2',)
+                            'indices': ['index2']
                         }
                     },
                 ]

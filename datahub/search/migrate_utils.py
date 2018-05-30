@@ -5,7 +5,7 @@ from datahub.search.bulk_sync import sync_app
 from datahub.search.elasticsearch import (
     delete_index,
     get_aliases_for_index,
-    update_alias,
+    start_alias_transaction,
 )
 
 
@@ -27,7 +27,8 @@ def resync_after_migrate(search_app):
     indices_to_remove = read_indices - {write_index}
 
     if indices_to_remove:
-        update_alias(read_alias, remove_indices=tuple(indices_to_remove))
+        with start_alias_transaction() as alias_transaction:
+            alias_transaction.remove_indices_from_alias(read_alias, indices_to_remove)
     else:
         logger.warning('No indices to remove for the {read_alias} alias')
 

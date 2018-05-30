@@ -45,33 +45,25 @@ def test_migrate_app_with_app_needing_migration(monkeypatch, mock_es_client):
 
     mock_app.es_model.create_index.assert_called_once_with(new_index)
 
-    assert mock_client.indices.update_aliases.call_count == 2
-    mock_client.indices.update_aliases.assert_any_call(
+    mock_client.indices.update_aliases.assert_called_once_with(
         body={
             'actions': [
                 {
                     'add': {
                         'alias': 'test-read-alias',
-                        'indices': (new_index,)
-                    }
-                },
-            ]
-        }
-    )
-
-    mock_client.indices.update_aliases.assert_any_call(
-        body={
-            'actions': [
-                {
-                    'remove': {
-                        'alias': 'test-write-alias',
-                        'indices': (old_index,)
+                        'indices': [new_index]
                     }
                 },
                 {
                     'add': {
                         'alias': 'test-write-alias',
-                        'indices': (new_index,)
+                        'indices': [new_index]
+                    }
+                },
+                {
+                    'remove': {
+                        'alias': 'test-write-alias',
+                        'indices': [old_index]
                     }
                 },
             ]

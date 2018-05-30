@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from logging import getLogger
 from urllib.parse import urlparse
 
@@ -163,34 +164,46 @@ def alias_exists(alias):
     return client.indices.exists_alias(name=alias)
 
 
-def update_alias(alias, add_indices=(), remove_indices=()):
-    """Updates the indices associated with an alias."""
-    if not (add_indices or remove_indices):
-        raise ValueError('add_indices or remove_indices must be provided')
+class AliasUpdater:
+    """Helper class for making multiple alias updates atomically."""
 
-    logger.info(f'Adding {add_indices} and removing {remove_indices} from the {alias} alias...')
-    client = get_client()
-    actions = []
+    def __init__(self):
+        """Initialises the instance with an empty list of pending operations."""
+        self.actions = []
 
-    if remove_indices:
-        actions.append({
-            'remove': {
-                'alias': alias,
-                'indices': remove_indices
-            }
-        })
-
-    if add_indices:
-        actions.append({
+    def add_indices_to_alias(self, alias, indices):
+        """Adds a pending operation to add indices to an alias."""
+        self.actions.append({
             'add': {
                 'alias': alias,
-                'indices': add_indices
+                'indices': list(indices)
             }
         })
 
-    client.indices.update_aliases(body={
-        'actions': actions
-    })
+    def remove_indices_from_alias(self, alias, indices):
+        """Adds a pending operation to remove indices from an alias."""
+        self.actions.append({
+            'remove': {
+                'alias': alias,
+                'indices': list(indices)
+            }
+        })
+
+    def commit(self):
+        """Commits (flushes) pending operations."""
+        client = get_client()
+        client.indices.update_aliases(body={
+            'actions': self.actions
+        })
+        self.actions = []
+
+
+@contextmanager
+def start_alias_transaction():
+    """Returns a context manager that can be used to update indices atomically."""
+    alias_updater = AliasUpdater()
+    yield alias_updater
+    alias_updater.commit()
 
 
 def bulk(actions=None, chunk_size=None, **kwargs):

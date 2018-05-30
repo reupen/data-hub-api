@@ -5,7 +5,11 @@ from elasticsearch_dsl import DocType, MetaField
 
 from datahub.core.exceptions import DataHubException
 from datahub.search.elasticsearch import (
-    alias_exists, create_index, get_indices_for_alias, index_exists, update_alias
+    alias_exists,
+    create_index,
+    get_indices_for_alias,
+    index_exists,
+    start_alias_transaction,
 )
 from datahub.search.utils import get_model_non_mapped_field_names, get_normalised_mapping_as_bytes
 
@@ -85,7 +89,6 @@ class BaseESModel(DocType):
         """Configures Elasticsearch index."""
         read_alias_exists = alias_exists(cls.get_read_alias())
         write_alias_exists = alias_exists(cls.get_write_alias())
-
         if not write_alias_exists:
             # Handle migration from the legacy single-index set-up
             # TODO: Remove once all environments have been migrated to the new structure
@@ -95,10 +98,15 @@ class BaseESModel(DocType):
                 index_name = cls.get_target_index_name()
                 cls.create_index(index_name)
 
-            update_alias(cls.get_write_alias(), add_indices=(index_name,))
+            with start_alias_transaction() as alias_transaction:
+                alias_transaction.add_indices_to_alias(cls.get_write_alias(), [index_name])
 
         if not read_alias_exists:
-            update_alias(cls.get_read_alias(), add_indices=(cls.get_write_index(),))
+            with start_alias_transaction() as alias_transaction:
+                alias_transaction.add_indices_to_alias(
+                    cls.get_read_alias(),
+                    [cls.get_write_index()]
+                )
 
     @classmethod
     def create_index(cls, index_name):

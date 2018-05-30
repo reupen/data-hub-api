@@ -166,48 +166,56 @@ def test_alias_exists(mock_es_client, expected):
 
 
 @pytest.mark.parametrize(
-    'add_indices,remove_indices,expected_body',
+    'add_actions,remove_actions,expected_body',
     (
         (
             (
                 (),
-                ('index1', 'index2'),
+                (
+                    ('test-alias', ('index1', 'index2')),
+                ),
                 {
                     'actions': [{
                         'remove': {
                             'alias': 'test-alias',
-                            'indices': ('index1', 'index2'),
+                            'indices': ['index1', 'index2'],
                         }
                     }]
                 }
             ),
             (
-                ('index1', 'index2'),
+                (
+                    ('test-alias', ('index1', 'index2')),
+                ),
                 (),
                 {
                     'actions': [{
                         'add': {
                             'alias': 'test-alias',
-                            'indices': ('index1', 'index2'),
+                            'indices': ['index1', 'index2'],
                         }
                     }]
                 }
             ),
             (
-                ('index1', 'index2'),
-                ('index3', 'index4'),
+                (
+                    ('test-alias', ('index1', 'index2')),
+                ),
+                (
+                    ('test-alias-2', ('index3', 'index4')),
+                ),
                 {
                     'actions': [
                         {
-                            'remove': {
+                            'add': {
                                 'alias': 'test-alias',
-                                'indices': ('index3', 'index4'),
+                                'indices': ['index1', 'index2'],
                             }
                         },
                         {
-                            'add': {
-                                'alias': 'test-alias',
-                                'indices': ('index1', 'index2'),
+                            'remove': {
+                                'alias': 'test-alias-2',
+                                'indices': ['index3', 'index4'],
                             }
                         },
                     ]
@@ -216,16 +224,12 @@ def test_alias_exists(mock_es_client, expected):
         )
     )
 )
-def test_update_alias(mock_es_client, add_indices, remove_indices, expected_body):
+def test_update_alias(mock_es_client, add_actions, remove_actions, expected_body):
     """Test get_aliases_for_index()."""
-    alias = 'test-alias'
     client = mock_es_client.return_value
-    elasticsearch.update_alias(alias, add_indices=add_indices, remove_indices=remove_indices)
+    with elasticsearch.start_alias_transaction() as alias_transaction:
+        for action in add_actions:
+            alias_transaction.add_indices_to_alias(action[0], action[1])
+        for action in remove_actions:
+            alias_transaction.remove_indices_from_alias(action[0], action[1])
     client.indices.update_aliases.assert_called_with(body=expected_body)
-
-
-def test_update_alias_raises_error_with_no_indices(mock_es_client):
-    """Test that update_alias() raises an error if no add or remove indices are passed."""
-    alias = 'test-alias'
-    with pytest.raises(ValueError):
-        elasticsearch.update_alias(alias, add_indices=(), remove_indices=())

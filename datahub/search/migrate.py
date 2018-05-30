@@ -2,7 +2,7 @@ from logging import getLogger
 
 from datahub.core.exceptions import DataHubException
 from datahub.search.apps import get_search_apps
-from datahub.search.elasticsearch import update_alias
+from datahub.search.elasticsearch import start_alias_transaction
 from datahub.search.tasks import migrate_model
 
 logger = getLogger(__name__)
@@ -58,12 +58,10 @@ def _perform_migration(search_app):
 
     es_model.create_index(new_index_name)
 
-    update_alias(read_alias_name, add_indices=(new_index_name,))
-    update_alias(
-        write_alias_name,
-        add_indices=(new_index_name,),
-        remove_indices=(current_write_index,)
-    )
+    with start_alias_transaction() as alias_transaction:
+        alias_transaction.add_indices_to_alias(read_alias_name, [new_index_name])
+        alias_transaction.add_indices_to_alias(write_alias_name, [new_index_name])
+        alias_transaction.remove_indices_from_alias(write_alias_name, [current_write_index])
 
     _schedule_resync(search_app)
 

@@ -2,7 +2,6 @@ from logging import getLogger
 
 from datahub.core.thread_pool import submit_to_thread_pool
 from datahub.search import elasticsearch
-from datahub.search.elasticsearch import get_indices_for_alias
 
 logger = getLogger(__name__)
 
@@ -52,15 +51,15 @@ class SignalReceiver:
 
 def _sync_es(search_model, db_model, pk):
     """Sync to ES by instance pk and type."""
+    read_indices, write_index = search_model.get_read_and_write_indices()
+
     instance = db_model.objects.get(pk=pk)
-    doc = search_model.es_document(instance)
+    doc = search_model.es_document(instance, index=write_index)
     elasticsearch.bulk(actions=(doc, ), chunk_size=1)
 
     # If a migration is in progress, remove old versions of the document from indices that are
     # being migrated from
-    read_alias = search_model.get_read_alias()
-    write_alias = search_model.get_write_alias()
-    remove_indices = get_indices_for_alias(read_alias) - get_indices_for_alias(write_alias)
+    remove_indices = read_indices - {write_index}
     for index in remove_indices:
         doc.delete(index=index)
 

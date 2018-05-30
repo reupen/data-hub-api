@@ -18,8 +18,7 @@ def resync_after_migrate(search_app):
 
     es_model = search_app.es_model
     read_alias = es_model.get_read_alias()
-    read_indices = es_model.get_read_indices()
-    write_index = es_model.get_write_index()
+    read_indices, write_index = es_model.get_read_and_write_indices()
 
     if write_index not in read_indices:
         raise DataHubException('Write index not in read alias, aborting mapping migration...')

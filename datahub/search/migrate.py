@@ -30,7 +30,7 @@ def migrate_app(search_app):
         _perform_migration(search_app)
         return
 
-    if len(es_model.get_read_indices()) != 1:
+    if len(es_model.get_read_and_write_indices()[0]) != 1:
         logger.info('Possibly incomplete %s search app migration detected', app_name)
         _schedule_resync(search_app)
         return
@@ -47,8 +47,7 @@ def _perform_migration(search_app):
     write_alias_name = es_model.get_write_alias()
     new_index_name = es_model.get_target_index_name()
 
-    current_read_indices = es_model.get_read_indices()
-    current_write_index = es_model.get_write_index()
+    current_read_indices, current_write_index = es_model.get_read_and_write_indices()
 
     if current_write_index not in current_read_indices:
         raise DataHubException('Cannot migrate Elasticsearch index with a read alias referencing '

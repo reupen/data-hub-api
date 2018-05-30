@@ -8,6 +8,7 @@ from datahub.search.elasticsearch import (
     alias_exists,
     create_index,
     get_indices_for_alias,
+    get_indices_for_aliases,
     index_exists,
     start_alias_transaction,
 )
@@ -45,17 +46,22 @@ class BaseESModel(DocType):
         return f'{settings.ES_INDEX_PREFIX}-{cls._doc_type.name}-write'
 
     @classmethod
-    def get_read_indices(cls):
-        """Gets the indices currently referenced by the read alias."""
-        return get_indices_for_alias(cls.get_read_alias())
-
-    @classmethod
     def get_write_index(cls):
         """Gets the index currently referenced by the write alias."""
         indices = get_indices_for_alias(cls.get_write_alias())
         if len(indices) != 1:
             raise DataHubException()
         return next(iter(indices))
+
+    @classmethod
+    def get_read_and_write_indices(cls):
+        """Gets the indices currently referenced by the read and write aliases."""
+        read_indices, write_indices = get_indices_for_aliases(
+            cls.get_read_alias(), cls.get_write_alias()
+        )
+        if len(write_indices) != 1:
+            raise DataHubException()
+        return read_indices, next(iter(write_indices))
 
     @classmethod
     def get_index_prefix(cls):
@@ -115,12 +121,12 @@ class BaseESModel(DocType):
         cls.init(index_name)
 
     @classmethod
-    def es_document(cls, dbmodel):
+    def es_document(cls, dbmodel, index=None):
         """Creates Elasticsearch document."""
         source = cls.db_object_to_dict(dbmodel)
 
         return {
-            '_index': cls.get_write_alias(),
+            '_index': index or cls.get_write_alias(),
             '_type': cls._doc_type.name,
             '_id': source.get('id'),
             '_source': source,

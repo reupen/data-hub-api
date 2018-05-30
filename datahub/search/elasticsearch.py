@@ -151,6 +151,19 @@ def get_indices_for_alias(alias):
     return client.indices.get_alias(name=alias).keys()
 
 
+def get_indices_for_aliases(*aliases):
+    """Gets the indices referenced by multiple aliases."""
+    client = get_client()
+    alias_to_index_mapping = {alias: set() for alias in aliases}
+    index_to_alias_mapping = client.indices.get_alias(name=aliases)
+
+    for index_name, index_properties in index_to_alias_mapping.items():
+        for alias in index_properties['aliases']:
+            alias_to_index_mapping[alias].add(index_name)
+
+    return [alias_to_index_mapping[alias] for alias in aliases]
+
+
 def get_aliases_for_index(index):
     """Gets the aliases referencing an index."""
     client = get_client()

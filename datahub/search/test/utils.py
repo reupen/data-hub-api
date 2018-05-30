@@ -34,7 +34,7 @@ def create_mock_search_app(
         es_model=Mock(
             get_current_mapping_hash=Mock(return_value=current_mapping_hash),
             get_target_mapping_hash=Mock(return_value=target_mapping_hash),
-            get_read_indices=Mock(return_value=read_indices),
+            get_read_and_write_indices=Mock(return_value=(read_indices, write_index)),
             get_write_index=Mock(return_value=write_index),
             get_read_alias=Mock(return_value='test-read-alias'),
             get_write_alias=Mock(return_value='test-write-alias'),

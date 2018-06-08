@@ -2,6 +2,7 @@ from logging import getLogger
 
 from datahub.core.thread_pool import submit_to_thread_pool
 from datahub.search import elasticsearch
+from datahub.search.query_builder import delete_document
 
 logger = getLogger(__name__)
 
@@ -60,8 +61,7 @@ def _sync_es(search_model, db_model, pk):
     # If a migration is in progress, remove old versions of the document from indices that are
     # being migrated from
     remove_indices = read_indices - {write_index}
-    for index in remove_indices:
-        doc.delete(index=index)
+    delete_document(search_model, pk, indices=remove_indices)
 
 
 def sync_es(search_model, db_model, pk):

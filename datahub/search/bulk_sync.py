@@ -65,7 +65,7 @@ def _delete_documents(index, complete_index_actions):
     non_404_errors = [error for error in errors if error['delete']['status'] != 404]
     if non_404_errors:
         raise DataHubException(
-            f'One or more errors during an Elasticsearch _bulk delete operation: '
+            f'One or more errors during an Elasticsearch bulk delete operation: '
             f'{non_404_errors!r}'
         )
 

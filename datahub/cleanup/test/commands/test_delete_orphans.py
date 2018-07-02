@@ -1,12 +1,12 @@
 from datetime import timedelta
 
 import pytest
-from django.apps import apps
 from django.core import management
 from django.core.management.base import CommandError
 from django.utils.timezone import now
 from freezegun import freeze_time
 
+from datahub.cleanup.cleanup_config import CleanupType, get_configs_for_type
 from datahub.cleanup.management.commands import delete_orphans
 from datahub.company.test.factories import CompanyFactory, ContactFactory
 from datahub.core.test.factories import to_many_field
@@ -19,6 +19,9 @@ from datahub.omis.quote.test.factories import QuoteFactory
 
 
 pytestmark = pytest.mark.django_db
+
+
+ORPHANING_CONFIGS = get_configs_for_type(CleanupType.orphaned)
 
 
 class ShallowInvestmentProjectFactory(InvestmentProjectFactory):
@@ -87,10 +90,10 @@ def pytest_generate_tests(metafunc):
     """
     if 'orphaning_mapping' in metafunc.fixturenames:
         view_data = []
-        for model_name in delete_orphans.ORPHANING_CONFIGS:
-            mapping = MAPPINGS[model_name]
+        for model in ORPHANING_CONFIGS:
+            mapping = MAPPINGS[model._meta.label]
             view_data += [
-                (model_name, mapping['factory'], dep_factory, dep_field_name)
+                (model, mapping['factory'], dep_factory, dep_field_name)
                 for dep_factory, dep_field_name in mapping['dependent_models']
             ]
 
@@ -98,22 +101,20 @@ def pytest_generate_tests(metafunc):
             'orphaning_mapping',
             view_data,
             ids=[
-                f'{model_name}: {dep_factory._meta.model.__name__}.{dep_field_name}'
-                for model_name, _, dep_factory, dep_field_name in view_data
+                f'{model._meta.label}: {dep_factory._meta.model.__name__}.{dep_field_name}'
+                for model, _, dep_factory, dep_field_name in view_data
             ]
         )
 
 
-@pytest.mark.parametrize('model_name', delete_orphans.ORPHANING_CONFIGS)
-def test_mappings(model_name):
+@pytest.mark.parametrize('model', ORPHANING_CONFIGS)
+def test_mappings(model):
     """
     Test that `MAPPINGS` includes all the data necessary for covering all the cases.
     This is to avoid missing tests when new fields and models are added or changed.
     """
-    model = apps.get_model(model_name)
-
     try:
-        mapping = MAPPINGS[model_name]
+        mapping = MAPPINGS[model._meta.label]
     except KeyError:
         pytest.fail(f'Please add test cases for deleting orphaned {model}')
 
@@ -155,10 +156,10 @@ def test_run(orphaning_mapping):
         - a record without any objets referencing it and old gets deleted
         - a record with another object referencing it doesn't get deleted
     """
-    model_name, model_factory, dep_factory, dep_field_name = orphaning_mapping
-    orphaning_config = delete_orphans.ORPHANING_CONFIGS[model_name]
+    model, model_factory, dep_factory, dep_field_name = orphaning_mapping
+    orphaning_config = ORPHANING_CONFIGS[model]
 
-    non_orphaning_datetime = now() - timedelta(days=orphaning_config.days_before_orphaning)
+    non_orphaning_datetime = now() - timedelta(days=orphaning_config.age_threshold)
     orphaning_datetime = non_orphaning_datetime - timedelta(days=1)
 
     # this orphan should NOT get deleted because not old enough
@@ -177,32 +178,30 @@ def test_run(orphaning_mapping):
     # 3 + 1 in case of self-references
     total_model_records = 3 + (1 if dep_factory == model_factory else 0)
 
-    model = apps.get_model(model_name)
     assert model.objects.count() == total_model_records
-    management.call_command(delete_orphans.Command(), model_name)
+    management.call_command(delete_orphans.Command(), model._meta.label)
     assert model.objects.count() == total_model_records - 1
 
 
 @freeze_time('2018-06-01 02:00')
-@pytest.mark.parametrize('model_name', delete_orphans.ORPHANING_CONFIGS)
-def test_simulate(model_name, caplog):
+@pytest.mark.parametrize('model', ORPHANING_CONFIGS)
+def test_simulate(model, caplog):
     """
     Test that if --simulate=True is passed in, the command only simulates the action
     without making any actual changes.
     """
     caplog.set_level('INFO')
 
-    orphaning_config = delete_orphans.ORPHANING_CONFIGS[model_name]
-    mapping = MAPPINGS[model_name]
+    orphaning_config = ORPHANING_CONFIGS[model]
+    mapping = MAPPINGS[model._meta.label]
     model_factory = mapping['factory']
-    orphaning_datetime = now() - timedelta(days=orphaning_config.days_before_orphaning + 1)
+    orphaning_datetime = now() - timedelta(days=orphaning_config.age_threshold + 1)
 
     for _ in range(3):
         create_orphanable_model(model_factory, orphaning_config, orphaning_datetime)
 
-    model = apps.get_model(model_name)
     assert model.objects.count() == 3
-    management.call_command(delete_orphans.Command(), model_name, simulate=True)
+    management.call_command(delete_orphans.Command(), model._meta.label, simulate=True)
     assert model.objects.count() == 3
 
     # check that 3 records would have been deleted

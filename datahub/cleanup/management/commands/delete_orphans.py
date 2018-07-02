@@ -8,32 +8,35 @@ from django.db.models import Exists, OuterRef
 from django.template.defaultfilters import capfirst
 from django.utils.timezone import now
 
+from datahub.cleanup.cleanup_config import (
+    CleanupConfig,
+    CleanupType,
+    get_config_for_type_and_model,
+    get_configs_for_type,
+    register_config,
+)
+from datahub.company.models import Company, Contact
+from datahub.event.models import Event
+
 
 logger = getLogger(__name__)
 
 
-class OrphanDeletionConfig:
-    """
-    Defines the config values with related defaults used to determine
-    when a record is considered orphan.
-    """
-
-    def __init__(
-        self,
-        days_before_orphaning=30 * 6,  # 6 months
-        date_field='modified_on'
-    ):
-        """Initialises the objects with overridable defaults."""
-        self.days_before_orphaning = days_before_orphaning
-        self.date_field = date_field
+@register_config(CleanupType.orphaned, Contact)
+class OrphanedContactCleanupConfig(CleanupConfig):
+    """Deletion configuration for orphaned contacts."""
 
 
-# CONFIGS FOR ALL MODELS ALLOWED TO BE CLEANED UP
-ORPHANING_CONFIGS = {
-    'company.Contact': OrphanDeletionConfig(),
-    'company.Company': OrphanDeletionConfig(),
-    'event.Event': OrphanDeletionConfig(date_field='end_date')
-}
+@register_config(CleanupType.orphaned, Company)
+class OrphanedCompanyCleanupConfig(CleanupConfig):
+    """Deletion configuration for orphaned company."""
+
+
+@register_config(CleanupType.orphaned, Event)
+class OrphanedEventCleanupConfig(CleanupConfig):
+    """Deletion configuration for orphaned events."""
+
+    date_field = 'end_date'
 
 
 def get_related_fields(model):
@@ -87,8 +90,8 @@ class Command(BaseCommand):
         """Define extra arguments."""
         parser.add_argument(
             'model',
-            choices=ORPHANING_CONFIGS,
-            help='Model to clean up.'
+            choices=[model._meta.label for model in get_configs_for_type(CleanupType.orphaned)],
+            help='Model to clean up.',
         )
         parser.add_argument(
             '--simulate',
@@ -99,13 +102,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Main logic for the actual command."""
-        model_name = options['model']
-        model = apps.get_model(model_name)
-        config = ORPHANING_CONFIGS[model_name]
+        model = apps.get_model(options['model'])
+        config = get_config_for_type_and_model(CleanupType.orphaned, model)
 
         qs = get_unreferenced_objects_query(model)
         qs = qs.filter(
-            **{f'{config.date_field}__lt': now() - timedelta(config.days_before_orphaning)}
+            **{f'{config.date_field}__lt': now() - timedelta(config.age_threshold)}
         ).order_by('-modified_on')
 
         model_verbose_name = capfirst(model._meta.verbose_name_plural)

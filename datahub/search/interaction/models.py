@@ -1,6 +1,6 @@
 from operator import attrgetter
 
-from elasticsearch_dsl import Boolean, Date, Double, Keyword
+from elasticsearch_dsl import Boolean, Date, Double, Keyword, Text
 
 from datahub.search import dict_utils, fields
 from datahub.search.models import BaseESModel
@@ -21,12 +21,12 @@ class Interaction(BaseESModel):
     event = fields.id_name_partial_field('event')
     investment_project = fields.id_name_field()
     investment_project_sector = fields.sector_field()
-    is_event = Boolean()
-    grant_amount_offered = Double()
+    is_event = Boolean(index=False)
+    grant_amount_offered = Double(index=False)
     kind = Keyword()
     modified_on = Date()
-    net_company_receipt = Double()
-    notes = fields.EnglishText()
+    net_company_receipt = Double(index=False)
+    notes = Text(index=False)
     service = fields.id_name_field()
     service_delivery_status = fields.id_name_field()
     subject = fields.SortableCaseInsensitiveKeywordText(

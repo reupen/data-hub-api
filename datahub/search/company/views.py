@@ -1,7 +1,10 @@
+from datahub.company.models import Company as DBCompany
+from datahub.core.query_utils import get_front_end_url_expression
+from datahub.metadata.query_utils import get_sector_name_subquery
 from datahub.oauth.scopes import Scope
 from .models import Company
 from .serializers import SearchCompanySerializer
-from ..views import SearchAPIView
+from ..views import SearchAPIView, SearchExportAPIView
 
 
 class SearchCompanyParams:
@@ -48,3 +51,18 @@ class SearchCompanyParams:
 
 class SearchCompanyAPIView(SearchCompanyParams, SearchAPIView):
     """Filtered company search view."""
+
+
+class SearchCompanyExportAPIView(SearchCompanyParams, SearchExportAPIView):
+    """Company search export view."""
+
+    queryset = DBCompany.objects.annotate(
+        link=get_front_end_url_expression('company', 'pk'),
+        sector_name=get_sector_name_subquery('sector'),
+    )
+    field_titles = {
+        'name': 'Name',
+        'alias': 'Trading name',
+        'link': 'Link',
+        'sector_name': 'Sector',
+    }

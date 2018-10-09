@@ -2,9 +2,6 @@ version: 2.1
 
 job_defaults: &job_defaults
   parameters:
-    es_image:
-      type: string
-
     publish_coverage:
       type: boolean
       default: false
@@ -33,7 +30,7 @@ job_defaults: &job_defaults
   docker:
     - image: python:3.6
 
-    - image: <<parameters.es_image>>
+    - image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
 
     - image: postgres:9.6
       environment:
@@ -79,23 +76,13 @@ job_defaults: &job_defaults
               bash ./codecov.sh -t ${COV_TOKEN}
 
 jobs:
-
-  build_es_55:
-    <<: *job_defaults
-
-  build_es_63:
+  build:
     <<: *job_defaults
 
 workflows:
   version: 2
 
-  Elasticsearch 5.5:
+  build:
     jobs:
-      - build_es_55:
+      - build:
           publish_coverage: true
-          es_image: elasticsearch:5.5
-
-  Elasticsearch 6.3:
-    jobs:
-      - build_es_63:
-          es_image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2

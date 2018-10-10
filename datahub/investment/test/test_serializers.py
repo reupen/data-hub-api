@@ -4,6 +4,7 @@ from datahub.company.test.factories import AdviserFactory
 from datahub.investment.serializers import (
     IProjectTeamMemberListSerializer,
     IProjectTeamMemberSerializer,
+    IProjectSerializer
 )
 from datahub.investment.test.factories import (
     InvestmentProjectFactory,
@@ -127,3 +128,10 @@ def test_team_member_list_update_add_only():
     assert updated_team_members[1].adviser == new_team_member_data[1]['adviser']
     assert updated_team_members[1].role == new_team_member_data[1]['role']
     assert project.team_members.count() == 2
+
+
+def test_estimated_land_date_is_required_for_new_project():
+    project_data = dict(estimated_land_date=None)
+    serializer = IProjectSerializer(data=project_data)
+    assert not serializer.is_valid()
+    assert 'estimated_land_date' in serializer.errors.keys()

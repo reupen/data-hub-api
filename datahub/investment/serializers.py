@@ -21,7 +21,7 @@ from datahub.investment.models import (
     Involvement,
     SpecificProgramme,
 )
-from datahub.investment.validate import validate
+from datahub.investment.validate import validate, REQUIRED_MESSAGE
 
 CORE_FIELDS = (
     'id',
@@ -245,6 +245,11 @@ class IProjectSerializer(PermittedFieldsModelSerializer):
     proposal_deadline = serializers.DateField(required=False, allow_null=True)
     stage_log = NestedInvestmentProjectStageLogSerializer(many=True, read_only=True)
 
+    def validate_estimated_land_date(self, value):
+        if not self.instance and not value:
+            raise serializers.ValidationError(REQUIRED_MESSAGE)
+        return value
+
     def validate(self, data):
         """Validates the object after individual fields have been validated.
 
@@ -254,24 +259,10 @@ class IProjectSerializer(PermittedFieldsModelSerializer):
         cases, only the fields being modified are validated.  If a project ends up in an
         invalid state, this avoids the user being unable to rectify the situation.
         """
-        if not self.instance:
-            # Required for validation as DRF does not allow defaults for read-only fields
-            data['allow_blank_estimated_land_date'] = False
-            data['allow_blank_possible_uk_regions'] = False
-
         self._check_if_investment_project_can_be_moved_to_verify_win(data)
         self._check_if_investment_project_can_be_moved_to_won(data)
-
-        fields = None
-        if self.partial and 'stage' not in data:
-            fields = data.keys()
-        errors = validate(self.instance, data, fields=fields)
-
-        if errors:
-            raise serializers.ValidationError(errors)
-
+        self._additional_validation(data)
         self._update_status(data)
-
         return data
 
     def _check_if_investment_project_can_be_moved_to_verify_win(self, data):
@@ -306,6 +297,17 @@ class IProjectSerializer(PermittedFieldsModelSerializer):
                     'stage': self.default_error_messages['only_ivt_can_move_to_won'],
                 }
                 raise serializers.ValidationError(errors)
+
+    def _additional_validation(self, data):
+        if not self.instance:
+            # Required for validation as DRF does not allow defaults for read-only fields
+            data['allow_blank_possible_uk_regions'] = False
+        fields = None
+        if self.partial and 'stage' not in data:
+            fields = data.keys()
+        errors = validate(self.instance, data, fields=fields)
+        if errors:
+            raise serializers.ValidationError(errors)
 
     def get_incomplete_fields(self, instance):
         """Returns the names of the fields that still need to be completed in order to

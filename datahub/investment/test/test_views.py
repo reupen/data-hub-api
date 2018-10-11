@@ -551,14 +551,14 @@ class TestCreateView(APITestMixin):
             'fdi_type': {
                 'id': constants.FDIType.creation_of_new_site_or_activity.value.id,
             },
-            'estimated_land_date': None
+            'estimated_land_date': None,
         }
         response = self.api_client.post(url, data=request_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         response_data = response.json()
         assert response_data == {
             'estimated_land_date': ['This field is required.'],
-            'referral_source_activity': ['This field is required.']
+            'referral_source_activity': ['This field is required.'],
         }
 
 

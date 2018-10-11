@@ -21,7 +21,7 @@ from datahub.investment.models import (
     Involvement,
     SpecificProgramme,
 )
-from datahub.investment.validate import validate, REQUIRED_MESSAGE
+from datahub.investment.validate import REQUIRED_MESSAGE, validate
 
 CORE_FIELDS = (
     'id',
@@ -246,6 +246,7 @@ class IProjectSerializer(PermittedFieldsModelSerializer):
     stage_log = NestedInvestmentProjectStageLogSerializer(many=True, read_only=True)
 
     def validate_estimated_land_date(self, value):
+        """Additional validation for estimated land date."""
         if not self.instance and not value:
             raise serializers.ValidationError(REQUIRED_MESSAGE)
         return value

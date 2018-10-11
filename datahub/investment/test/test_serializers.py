@@ -2,9 +2,9 @@ import pytest
 
 from datahub.company.test.factories import AdviserFactory
 from datahub.investment.serializers import (
+    IProjectSerializer,
     IProjectTeamMemberListSerializer,
     IProjectTeamMemberSerializer,
-    IProjectSerializer
 )
 from datahub.investment.test.factories import (
     InvestmentProjectFactory,
@@ -131,6 +131,7 @@ def test_team_member_list_update_add_only():
 
 
 def test_estimated_land_date_is_required_for_new_project():
+    """Test creating new project requires an estimated land date."""
     project_data = dict(estimated_land_date=None)
     serializer = IProjectSerializer(data=project_data)
     assert not serializer.is_valid()

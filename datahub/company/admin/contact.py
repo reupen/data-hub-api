@@ -158,7 +158,6 @@ class ContactAdmin(BaseModelAdminMixin, VersionAdmin):
     readonly_fields = (
         'created',
         'modified',
-        'data_hub_url',
         'archived_documents_url_path',
     )
     list_display = (

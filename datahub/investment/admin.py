@@ -49,7 +49,6 @@ class InvestmentProjectAdmin(BaseModelAdminMixin, VersionAdmin):
         'comments',
         'created',
         'modified',
-        'data_hub_url',
     )
     list_display = (
         'name',

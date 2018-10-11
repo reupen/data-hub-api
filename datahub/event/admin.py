@@ -47,7 +47,6 @@ class EventAdmin(BaseModelAdminMixin, VersionAdmin):
         'name',
         'created',
         'modified',
-        'data_hub_url',
         'event_type',
         'start_date',
         'end_date',
@@ -83,7 +82,6 @@ class EventAdmin(BaseModelAdminMixin, VersionAdmin):
         'id',
         'created',
         'modified',
-        'data_hub_url',
         'archived_documents_url_path',
     )
     search_fields = ('name', 'pk')

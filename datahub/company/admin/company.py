@@ -33,7 +33,6 @@ class CompanyAdmin(BaseModelAdminMixin, VersionAdmin):
                     'id',
                     'created',
                     'modified',
-                    'data_hub_url',
                     'name',
                     'alias',
                     'company_number',
@@ -124,7 +123,6 @@ class CompanyAdmin(BaseModelAdminMixin, VersionAdmin):
         'id',
         'created',
         'modified',
-        'data_hub_url',
         'archived_documents_url_path',
         'reference_code',
     )

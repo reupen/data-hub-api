@@ -72,7 +72,7 @@ class OrderAdmin(BaseModelAdminMixin, ViewAndChangeOnlyAdmin):
 
     fields = (
         'id', 'reference', 'created', 'modified',
-        'public_token', 'public_facing_url', 'data_hub_url',
+        'public_token', 'public_facing_url',
         'company', 'contact', 'contact_email', 'contact_phone',
         'primary_market', 'sector', 'uk_region',
         'status', 'paid_on', 'completed', 'cancelled',

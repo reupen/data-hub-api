@@ -247,7 +247,9 @@ class IProjectSerializer(PermittedFieldsModelSerializer):
 
     def validate_estimated_land_date(self, value):
         """Additional validation for estimated land date."""
-        if not self.instance and not value:
+        if value:
+            return value
+        if not self.instance or self.instance.estimated_land_date:
             raise serializers.ValidationError(REQUIRED_MESSAGE)
         return value
 

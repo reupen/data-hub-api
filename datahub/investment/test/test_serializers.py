@@ -136,3 +136,12 @@ def test_estimated_land_date_is_required_for_new_project():
     serializer = IProjectSerializer(data=project_data)
     assert not serializer.is_valid()
     assert 'estimated_land_date' in serializer.errors.keys()
+
+
+def test_estimated_land_date_cannot_be_erased_if_value_already_present():
+    """Test updating an existing project does not allow a null estimated land date."""
+    project = InvestmentProjectFactory()
+    project_data = dict(estimated_land_date=None)
+    serializer = IProjectSerializer(project, data=project_data, partial=True)
+    assert not serializer.is_valid()
+    assert 'estimated_land_date' in serializer.errors.keys()

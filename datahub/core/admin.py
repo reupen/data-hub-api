@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.template.defaultfilters import date as date_filter, time as time_filter
@@ -98,6 +99,14 @@ class BaseModelAdminMixin:
     def modified(self, obj):
         """:returns: modified on/by details."""
         return self._get_description_for_timed_event(obj.modified_on, obj.modified_by)
+
+    def data_hub_url(self, obj):
+        """Returns a URL for the object in the Data Hub internal front end."""
+        url_prefix = settings.DATAHUB_FRONTEND_URL_PREFIXES[obj._meta.model_name]
+        url = f'{url_prefix}/{obj.pk}'
+        return format_html('<a href="{url}">{url}</a>', url=url)
+
+    data_hub_url.short_description = 'Data Hub URL'
 
     def save_model(self, request, obj, form, change):
         """

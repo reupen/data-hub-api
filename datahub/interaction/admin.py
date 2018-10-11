@@ -49,6 +49,7 @@ class InteractionAdmin(BaseModelAdminMixin, VersionAdmin):
         'archived_documents_url_path',
         'created',
         'modified',
+        'data_hub_url',
     )
     list_select_related = (
         'company',

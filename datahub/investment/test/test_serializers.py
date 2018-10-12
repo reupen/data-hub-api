@@ -131,17 +131,25 @@ def test_team_member_list_update_add_only():
 
 
 def test_estimated_land_date_is_required_for_new_project():
-    """Test creating new project requires an estimated land date."""
-    project_data = dict(estimated_land_date=None)
+    """Tests estimated land date is required for new projects."""
+    project_data = {'estimated_land_date': None}
     serializer = IProjectSerializer(data=project_data)
     assert not serializer.is_valid()
     assert 'estimated_land_date' in serializer.errors.keys()
 
 
 def test_estimated_land_date_cannot_be_erased_if_value_already_present():
-    """Test updating an existing project does not allow a null estimated land date."""
+    """Tests updating estimated land date cannot be set to a blank if not allowed."""
     project = InvestmentProjectFactory()
-    project_data = dict(estimated_land_date=None)
+    project_data = {'estimated_land_date': None}
     serializer = IProjectSerializer(project, data=project_data, partial=True)
     assert not serializer.is_valid()
     assert 'estimated_land_date' in serializer.errors.keys()
+
+
+def test_estimated_land_date_can_be_blank_if_allowed():
+    """Tests updating estimated land date to a blank when if allowed."""
+    project = InvestmentProjectFactory(allow_blank_estimated_land_date=True)
+    project_data = {'estimated_land_date': None}
+    serializer = IProjectSerializer(project, data=project_data, partial=True)
+    assert serializer.is_valid() is True
